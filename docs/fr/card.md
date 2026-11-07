@@ -19,7 +19,7 @@ fan_entity: fan.salon
 
 La lumière, la minuterie et le bip sont détectés à partir du nom du ventilateur, cette ligne suffit donc. Rechargez la page du navigateur après l'installation ou la mise à jour de l'intégration. Une nouvelle carte n'est pas ajoutée seule à un tableau de bord : ajoutez-en une par ventilateur.
 
-Avec un ventilateur fusionné par l'intégration, l'éditeur visuel ne demande que ce qui relève de la carte (nom, sens, lumière éteinte) : le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
+L'éditeur visuel ne demande que le ventilateur et ce qui relève de la carte (nom, sens, lumière éteinte). Le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md). Pour un ventilateur utilisé sans l'intégration, réglez `fallback_fan_entity`, `light_entity`, `timer_entity`, `sound_entity` et les pourcentages des vitesses dans l'éditeur de code.
 
 ## Ce qu'elle affiche
 
@@ -117,7 +117,7 @@ Préférez l'intégration quand c'est possible : elle sert aussi aux automatisat
 2. sinon, parmi les entités nommées `<base>_…`, celle dont le suffixe est connu : `light` / `lumiere` / `lamp` pour la lumière, `timer` / `minuteur` / `countdown` pour la minuterie, `sound` / `son` / `beep` / `bip` / `buzzer` pour le bip ;
 3. sinon la seule entité restante `<base>_…` du domaine, sauf si son suffixe désigne une autre fonction (`oscillation`, `swing`, `child_lock`, ...) ou un autre rôle.
 
-Les entités d'un autre ventilateur dont le nom prolonge celui-ci sont ignorées : avec `fan.ceiling_fan` et `fan.ceiling_fan_2`, la première carte ne prend jamais `light.ceiling_fan_2_light`. Quand plusieurs entités conviennent aussi bien, la carte n'en choisit aucune et l'éditeur liste les candidates : choisissez-en une là, ou avec `light_entity`, `timer_entity` ou `sound_entity`. Les commandes dont l'entité n'est pas trouvée sont masquées.
+Les entités d'un autre ventilateur dont le nom prolonge celui-ci sont ignorées : avec `fan.ceiling_fan` et `fan.ceiling_fan_2`, la première carte ne prend jamais `light.ceiling_fan_2_light`. Quand plusieurs entités conviennent aussi bien, la carte n'en choisit aucune et choisissez-en une avec `light_entity`, `timer_entity` ou `sound_entity`. Les commandes dont l'entité n'est pas trouvée sont masquées.
 
 La minuterie est cherchée d'abord dans le domaine `number`, puis dans `select`. La carte appelle `number.set_value` ou `select.select_option` selon le domaine, et affiche les options qu'un `select` annonce.
 

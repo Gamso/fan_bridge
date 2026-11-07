@@ -48,23 +48,12 @@
     "title": "Paramètres de la carte ventilateur",
     "name": "Nom de la carte",
     "fan_entity": "Entité ventilateur",
-    "fallback_fan_entity": "Ventilateur de secours (facultatif, utilisé quand le principal est indisponible)",
-    "speed_percentages": "Pourcentages des vitesses du ventilateur principal (facultatif, ex. 17, 33, 50, 67, 83, 100)",
-    "fallback_speed_percentages": "Pourcentages des vitesses du ventilateur de secours (facultatif, ex. 1, 21, 41, 60, 80, 100)",
     "show_name": "Afficher le nom de la carte",
     "summer_direction": "Sens de rotation en mode été",
     "dir_forward": "Normal",
     "dir_reverse": "Inverse",
     "managed": "Géré par l'intégration FanBridge : ventilateur de secours, lumière, minuterie, bip et pourcentages des vitesses se règlent dans son bouton Configurer.",
-    "discovered": "Entités auto-détectées",
-    "not_found": "introuvable",
-    "light_entity": "Entité lumière (facultatif)",
     "light_independent": "Lumière utilisable ventilateur éteint",
-    "timer_entity": "Entité minuterie (facultatif)",
-    "sound_entity": "Interrupteur du bip (facultatif)",
-    "ambiguous": "plusieurs candidates, choisissez ci-dessus",
-    "fallback_light_entity": "Lumière du secours (facultatif)",
-    "fallback_timer_entity": "Minuterie du secours (facultatif)",
-    "fallback_sound_entity": "Bip du secours (facultatif)"
+    "standalone": "Choisis un ventilateur créé par l'intégration FanBridge (Paramètres → Appareils et services → FanBridge). Son secours, sa lumière, sa minuterie et son bip se règlent dans le bouton Configurer de l'intégration ; pour un ventilateur utilisé sans elle, passe par l'éditeur de code."
   }
 }

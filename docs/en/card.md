@@ -19,7 +19,7 @@ fan_entity: fan.living_room
 
 The light, the timer and the beep are discovered from the name of the fan, so that is enough. Reload the browser page after installing or updating the integration. A new card is not added to a dashboard by itself: add one per fan.
 
-With a fan merged by the integration the visual editor only asks for what belongs to the card (name, direction, light while off): the backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
+The visual editor only asks for the fan and what belongs to the card (name, direction, light while off). The backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md). For a fan used without the integration, set `fallback_fan_entity`, `light_entity`, `timer_entity`, `sound_entity` and the speed percentages in the code editor.
 
 ## What it shows
 
@@ -117,7 +117,7 @@ From `fan.ceiling_fan_with_light` the card extracts the base id `ceiling_fan_wit
 2. otherwise, among the entities named `<base>_…`, the one with a known suffix: `light` / `lumiere` / `lamp` for the light, `timer` / `minuteur` / `countdown` for the timer, `sound` / `son` / `beep` / `bip` / `buzzer` for the beep;
 3. otherwise the only remaining `<base>_…` entity of the domain, unless its suffix names another feature (`oscillation`, `swing`, `child_lock`, ...) or another role.
 
-Entities of another fan whose name extends this one are ignored: with `fan.ceiling_fan` and `fan.ceiling_fan_2`, the first card never picks `light.ceiling_fan_2_light`. When several entities match equally well, the card picks none and the editor lists the candidates: choose one there, or with `light_entity`, `timer_entity` or `sound_entity`. Controls for entities that are not found are hidden.
+Entities of another fan whose name extends this one are ignored: with `fan.ceiling_fan` and `fan.ceiling_fan_2`, the first card never picks `light.ceiling_fan_2_light`. When several entities match equally well, the card picks none and choose one with `light_entity`, `timer_entity` or `sound_entity`. Controls for entities that are not found are hidden.
 
 The timer is looked up in the `number` domain first, then in `select`. The card calls `number.set_value` or `select.select_option` according to the domain, and shows the options a `select` reports.
 

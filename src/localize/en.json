@@ -48,23 +48,12 @@
     "title": "Fan card settings",
     "name": "Card name",
     "fan_entity": "Fan entity",
-    "fallback_fan_entity": "Fallback fan entity (optional, used while the main one is unavailable)",
-    "speed_percentages": "Speed percentages of the main fan (optional, e.g. 17, 33, 50, 67, 83, 100)",
-    "fallback_speed_percentages": "Speed percentages of the fallback fan (optional, e.g. 1, 21, 41, 60, 80, 100)",
     "show_name": "Show card name",
     "summer_direction": "Rotation direction for summer mode",
     "dir_forward": "Normal",
     "dir_reverse": "Reverse",
     "managed": "Managed by the FanBridge integration: backup fan, light, timer, beep and speed percentages are set in its Configure dialog.",
-    "discovered": "Auto-discovered entities",
-    "not_found": "not found",
-    "light_entity": "Light entity (optional)",
     "light_independent": "Light works while the fan is off",
-    "timer_entity": "Timer entity (optional)",
-    "sound_entity": "Beep switch (optional)",
-    "ambiguous": "several matches, pick one above",
-    "fallback_light_entity": "Backup light entity (optional)",
-    "fallback_timer_entity": "Backup timer entity (optional)",
-    "fallback_sound_entity": "Backup beep switch (optional)"
+    "standalone": "Pick a fan created by the FanBridge integration (Settings → Devices & services → FanBridge). Its backup, light, timer and beep are set in the integration's Configure dialog; for a fan used without it, use the code editor."
   }
 }
