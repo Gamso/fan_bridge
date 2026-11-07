@@ -1,0 +1,148 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Nouveau ventilateur",
+        "description": "Nomme le ventilateur et choisis l'entité ventilateur à utiliser. Le ventilateur de secours, la lumière, la minuterie, les vitesses et les télécommandes se règlent ensuite, avec le bouton Configurer de l'intégration.",
+        "data": {
+          "name": "Nom",
+          "fan_entity": "Ventilateur",
+          "fallback_fan_entity": "Ventilateur de secours (facultatif)"
+        },
+        "data_description": {
+          "fan_entity": "Le ventilateur utilisé tant qu'il est disponible, en général l'intégration locale.",
+          "fallback_fan_entity": "Prend le relais quand le principal est indisponible, en général l'intégration cloud."
+        }
+      }
+    },
+    "error": {
+      "same_fan": "Le ventilateur de secours doit être une autre entité."
+    },
+    "abort": {
+      "already_configured": "Ce ventilateur est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "menu": {
+        "title": "FanBridge",
+        "description": "Rien n'est enregistré avant « Enregistrer » : fermer cette fenêtre avec ✕ annule les changements.\n\nBoutons de télécommande : {remote_count}",
+        "menu_options": {
+          "entities": "Ventilateur, lumière, minuterie et bip",
+          "speeds": "Pourcentages des vitesses",
+          "remotes": "Télécommandes",
+          "save": "Enregistrer"
+        }
+      },
+      "entities": {
+        "title": "Entités",
+        "description": "Pour chaque rôle, l'entité principale est utilisée tant qu'elle est disponible, et celle de secours prend le relais sinon. Laisse un rôle vide si le ventilateur ne l'a pas.",
+        "data": {
+          "fan_entity": "Ventilateur",
+          "fallback_fan_entity": "Ventilateur de secours",
+          "light_entity": "Lumière",
+          "fallback_light_entity": "Lumière de secours",
+          "timer_entity": "Minuterie d'arrêt",
+          "fallback_timer_entity": "Minuterie d'arrêt de secours",
+          "sound_entity": "Interrupteur du bip",
+          "fallback_sound_entity": "Interrupteur du bip de secours",
+          "reload_main": "Recharger l'intégration du ventilateur principal pendant que le secours est en service",
+          "presence_entity": "Présence de l'appareil principal (facultatif)"
+        },
+        "submit": "Retour au menu",
+        "data_description": {
+          "reload_main": "Retente toutes les quelques minutes (2, 5, 10, puis 30) jusqu'au retour du ventilateur principal. Utile pour les intégrations locales qui ne se rétablissent pas seules après un redémarrage avec l'appareil éteint.",
+          "presence_entity": "Une entité ping ou device tracker pour l'IP de l'appareil. Tant qu'elle est éteinte, rien n'est retenté, et dès qu'elle passe à on l'intégration est rechargée."
+        }
+      },
+      "speeds": {
+        "title": "Pourcentages des vitesses",
+        "description": "Pour les ventilateurs dont les pas annoncés ne correspondent pas aux vraies vitesses (une intégration cloud qui annonce 100 pas pour 6 vitesses, par exemple). Donne le pourcentage de chaque vitesse, de la plus basse à la plus haute, par ex. 1, 21, 41, 60, 80, 100 : strictement croissants, de 1 à 100, au plus {max} valeurs. Laisse vide pour utiliser les pas du ventilateur.",
+        "data": {
+          "speed_percentages": "Ventilateur principal",
+          "fallback_speed_percentages": "Ventilateur de secours"
+        },
+        "submit": "Retour au menu"
+      },
+      "remotes": {
+        "title": "Télécommandes",
+        "description": "Les boutons qui pilotent ce ventilateur.\n\n{remotes}",
+        "menu_options": {
+          "remote_add": "Ajouter un bouton",
+          "remote_remove": "Supprimer des boutons",
+          "menu": "← Retour au menu"
+        }
+      },
+      "remote_add": {
+        "title": "Ajouter un bouton de télécommande",
+        "description": "Choisis d'où vient l'appui, ce qu'il envoie et ce qu'il fait. Pour une télécommande Zigbee2MQTT, utilise son topic MQTT (zigbee2mqtt/NOM_TELECOMMANDE/action) ou son capteur d'action / son entité événement, et le nom de l'action comme valeur (ex. 1_single).",
+        "data": {
+          "source": "Source",
+          "topic": "Topic MQTT",
+          "entity_id": "Entité",
+          "payload": "Valeur (vide : toutes)",
+          "action": "Action",
+          "speed": "Vitesse (pour « Régler une vitesse »)"
+        },
+        "submit": "Ajouter"
+      },
+      "remote_remove": {
+        "title": "Supprimer des boutons",
+        "data": {
+          "remove": "Boutons à supprimer"
+        },
+        "submit": "Supprimer"
+      }
+    },
+    "error": {
+      "same_fan": "Le ventilateur de secours doit être une autre entité.",
+      "invalid_speeds": "Donne des pourcentages entiers strictement croissants de 1 à 100, séparés par des virgules.",
+      "topic_required": "Un topic MQTT est requis.",
+      "entity_required": "Une entité est requise."
+    }
+  },
+  "entity": {
+    "light": {
+      "light": {
+        "name": "Lumière"
+      }
+    },
+    "select": {
+      "timer": {
+        "name": "Minuterie"
+      }
+    },
+    "switch": {
+      "sound": {
+        "name": "Bip"
+      }
+    }
+  },
+  "selector": {
+    "remote_source": {
+      "options": {
+        "mqtt": "Message MQTT",
+        "entity": "État ou événement d'une entité"
+      }
+    },
+    "remote_action": {
+      "options": {
+        "fan_toggle": "Ventilateur : basculer",
+        "fan_on": "Ventilateur : allumer",
+        "fan_off": "Ventilateur : éteindre",
+        "speed_up": "Ventilateur : une vitesse de plus",
+        "speed_down": "Ventilateur : une vitesse de moins",
+        "set_speed": "Ventilateur : régler une vitesse",
+        "light_toggle": "Lumière : basculer",
+        "light_on": "Lumière : allumer",
+        "light_off": "Lumière : éteindre",
+        "direction_toggle": "Sens : basculer",
+        "direction_forward": "Sens : normal",
+        "direction_reverse": "Sens : inverse",
+        "oscillate_toggle": "Oscillation : basculer",
+        "preset_next": "Préréglage : suivant",
+        "sound_toggle": "Bip : basculer"
+      }
+    }
+  }
+}

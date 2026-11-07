@@ -1,0 +1,6 @@
+# Test requirements for the integration, pinned for reproducible runs.
+# pytest-homeassistant-custom-component pins homeassistant (here 2026.9.0),
+# pytest and pytest-asyncio.
+pytest-homeassistant-custom-component==0.13.363
+home-assistant-frontend==20260826.4
+ruff==0.16.10

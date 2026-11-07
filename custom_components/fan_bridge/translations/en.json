@@ -1,0 +1,148 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "New fan",
+        "description": "Name the fan and pick the fan entity to use. The backup fan, the light, the timer, the speeds and the remotes are set afterwards, from the integration's Configure button.",
+        "data": {
+          "name": "Name",
+          "fan_entity": "Fan",
+          "fallback_fan_entity": "Backup fan (optional)"
+        },
+        "data_description": {
+          "fan_entity": "The fan used as long as it is available, typically the local integration.",
+          "fallback_fan_entity": "Takes over while the main fan is unavailable, typically the cloud integration."
+        }
+      }
+    },
+    "error": {
+      "same_fan": "The backup fan must be a different entity."
+    },
+    "abort": {
+      "already_configured": "This fan is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "menu": {
+        "title": "FanBridge",
+        "description": "Nothing is saved before “Save”: closing this dialog with ✕ drops the changes.\n\nRemote buttons: {remote_count}",
+        "menu_options": {
+          "entities": "Fan, light, timer and beep",
+          "speeds": "Speed percentages",
+          "remotes": "Remotes",
+          "save": "Save"
+        }
+      },
+      "entities": {
+        "title": "Entities",
+        "description": "For each role, the main entity is used while it is available and the backup one takes over otherwise. Leave a role empty if the fan has none.",
+        "data": {
+          "fan_entity": "Fan",
+          "fallback_fan_entity": "Backup fan",
+          "light_entity": "Light",
+          "fallback_light_entity": "Backup light",
+          "timer_entity": "Stop timer",
+          "fallback_timer_entity": "Backup stop timer",
+          "sound_entity": "Beep switch",
+          "fallback_sound_entity": "Backup beep switch",
+          "reload_main": "Reload the main fan's integration while the backup is in charge",
+          "presence_entity": "Presence of the main device (optional)"
+        },
+        "submit": "Back to the menu",
+        "data_description": {
+          "reload_main": "Retries every few minutes (2, 5, 10, then 30) until the main fan is back. Useful for local integrations that do not recover on their own after a restart with the device off.",
+          "presence_entity": "A ping or device tracker entity for the device's IP. While it is off nothing is retried, and as soon as it turns on the integration is reloaded."
+        }
+      },
+      "speeds": {
+        "title": "Speed percentages",
+        "description": "For fans whose reported steps do not match their real speeds (a cloud integration reporting 100 steps for 6 speeds, for example). Give the percentage of each speed, lowest first, e.g. 1, 21, 41, 60, 80, 100: strictly increasing, 1 to 100, at most {max} values. Leave empty to use the fan's own steps.",
+        "data": {
+          "speed_percentages": "Main fan",
+          "fallback_speed_percentages": "Backup fan"
+        },
+        "submit": "Back to the menu"
+      },
+      "remotes": {
+        "title": "Remotes",
+        "description": "Buttons that drive this fan.\n\n{remotes}",
+        "menu_options": {
+          "remote_add": "Add a button",
+          "remote_remove": "Remove buttons",
+          "menu": "← Back to the menu"
+        }
+      },
+      "remote_add": {
+        "title": "Add a remote button",
+        "description": "Pick where the press comes from, what it sends, and what it does. For a Zigbee2MQTT remote use its MQTT topic (zigbee2mqtt/REMOTE_NAME/action) or its action sensor / event entity, and the action name as payload (e.g. 1_single).",
+        "data": {
+          "source": "Source",
+          "topic": "MQTT topic",
+          "entity_id": "Entity",
+          "payload": "Payload (empty: any)",
+          "action": "Action",
+          "speed": "Speed (for “Set speed”)"
+        },
+        "submit": "Add"
+      },
+      "remote_remove": {
+        "title": "Remove buttons",
+        "data": {
+          "remove": "Buttons to remove"
+        },
+        "submit": "Remove"
+      }
+    },
+    "error": {
+      "same_fan": "The backup fan must be a different entity.",
+      "invalid_speeds": "Give strictly increasing whole percentages from 1 to 100, separated by commas.",
+      "topic_required": "An MQTT topic is required.",
+      "entity_required": "An entity is required."
+    }
+  },
+  "entity": {
+    "light": {
+      "light": {
+        "name": "Light"
+      }
+    },
+    "select": {
+      "timer": {
+        "name": "Timer"
+      }
+    },
+    "switch": {
+      "sound": {
+        "name": "Beep"
+      }
+    }
+  },
+  "selector": {
+    "remote_source": {
+      "options": {
+        "mqtt": "MQTT message",
+        "entity": "Entity state or event"
+      }
+    },
+    "remote_action": {
+      "options": {
+        "fan_toggle": "Fan: toggle",
+        "fan_on": "Fan: turn on",
+        "fan_off": "Fan: turn off",
+        "speed_up": "Fan: one speed up",
+        "speed_down": "Fan: one speed down",
+        "set_speed": "Fan: set a speed",
+        "light_toggle": "Light: toggle",
+        "light_on": "Light: turn on",
+        "light_off": "Light: turn off",
+        "direction_toggle": "Direction: toggle",
+        "direction_forward": "Direction: forward",
+        "direction_reverse": "Direction: reverse",
+        "oscillate_toggle": "Oscillation: toggle",
+        "preset_next": "Preset: next",
+        "sound_toggle": "Beep: toggle"
+      }
+    }
+  }
+}

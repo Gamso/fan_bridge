@@ -1,0 +1,21 @@
+{
+  "domain": "fan_bridge",
+  "name": "FanBridge",
+  "after_dependencies": [
+    "mqtt"
+  ],
+  "codeowners": [
+    "@Gamso"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http"
+  ],
+  "documentation": "https://github.com/Gamso/fan_bridge",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/Gamso/fan_bridge/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

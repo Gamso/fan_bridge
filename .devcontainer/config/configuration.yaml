@@ -1,0 +1,200 @@
+homeassistant:
+  name: FanBridge Card DevContainer
+  latitude: 48.8566
+  longitude: 2.3522
+  elevation: 0
+  unit_system: metric
+  country: FR
+  time_zone: Europe/Paris
+  language: fr
+
+default_config:
+
+logger:
+  default: warning
+  logs:
+    homeassistant.components.lovelace: info
+
+# Main dashboard in YAML mode loads ui-lovelace.yaml and, crucially, honours the
+# `resources:` list below — YAML resources are only applied when the main
+# dashboard is in yaml mode (they are ignored under the default storage mode,
+# which is why extra_module_url / storage resources were unreliable here).
+lovelace:
+  mode: yaml
+  resources:
+    - url: /local/fan_bridge/fan-bridge-card.js?v=1
+      type: module
+
+# ── Backing helpers ───────────────────────────────────────────────────────────
+
+input_number:
+  wc_fan_speed_backing:
+    name: "Fan – Fan speed % (backing)"
+    min: 0
+    max: 100
+    step: 1
+    initial: 0
+    icon: mdi:speedometer
+  wc_timer_backing:
+    name: "Fan – Timer minutes (backing)"
+    min: 0
+    max: 480
+    step: 1
+    initial: 0
+    icon: mdi:timer
+  wc_light_kelvin_backing:
+    name: "Fan – Light color temp K (backing)"
+    min: 3000
+    max: 6500
+    step: 100
+    initial: 3000
+    icon: mdi:temperature-kelvin
+
+input_boolean:
+  wc_light_backing:
+    name: "Fan – Light (backing)"
+    icon: mdi:lightbulb
+    initial: false
+  wc_sound_backing:
+    name: "Fan – Sound beep (backing)"
+    icon: mdi:volume-high
+    initial: false
+
+input_select:
+  wc_fan_direction_backing:
+    name: "Fan – Fan direction (backing)"
+    options:
+      - "forward"
+      - "reverse"
+    initial: "forward"
+    icon: mdi:rotate-right
+  wc_fan_preset_backing:
+    name: "Fan – Preset mode (backing)"
+    # Matches a real Klassfan: "normal" is the neutral/manual preset (the card
+    # shows the speed for it); "sleep"/"nature" are the special modes.
+    options:
+      - "normal"
+      - "sleep"
+      - "nature"
+    initial: "normal"
+    icon: mdi:fan-auto
+
+# ── Template entities ─────────────────────────────────────────────────────────
+
+template:
+  - fan:
+      # fan.ceiling_fan_with_light
+      # State derived from speed: on when speed > 0, off when speed = 0
+      - name: "ceiling fan with light"
+        unique_id: ceiling_fan_with_light
+        # "on" when a speed is set OR a special (non-normal) preset is active.
+        state: >
+          {{ 'on' if states('input_number.wc_fan_speed_backing') | int > 0
+             or states('input_select.wc_fan_preset_backing') != 'normal'
+             else 'off' }}
+        percentage: "{{ states('input_number.wc_fan_speed_backing') | int }}"
+        direction: "{{ states('input_select.wc_fan_direction_backing') }}"
+        speed_count: 6
+        # Declaring preset_modes enables the PRESET_MODE feature on the entity.
+        preset_modes:
+          - "normal"
+          - "sleep"
+          - "nature"
+        preset_mode: "{{ states('input_select.wc_fan_preset_backing') }}"
+        turn_on:
+          service: input_number.set_value
+          target:
+            entity_id: input_number.wc_fan_speed_backing
+          data:
+            value: 17
+        turn_off:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.wc_fan_speed_backing
+            data:
+              value: 0
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.wc_fan_preset_backing
+            data:
+              option: "normal"
+        # Setting a speed returns the fan to the manual "normal" preset.
+        set_percentage:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.wc_fan_speed_backing
+            data:
+              value: "{{ percentage }}"
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.wc_fan_preset_backing
+            data:
+              option: "normal"
+        set_preset_mode:
+          service: input_select.select_option
+          target:
+            entity_id: input_select.wc_fan_preset_backing
+          data:
+            option: "{{ preset_mode }}"
+        set_direction:
+          service: input_select.select_option
+          target:
+            entity_id: input_select.wc_fan_direction_backing
+          data:
+            option: "{{ direction }}"
+
+  - number:
+      # number.ceiling_fan_with_light_minuteur
+      - name: "ceiling fan with light minuteur"
+        unique_id: ceiling_fan_with_light_minuteur
+        state: "{{ states('input_number.wc_timer_backing') | int }}"
+        min: 0
+        max: 480
+        step: 1
+        set_value:
+          service: input_number.set_value
+          target:
+            entity_id: input_number.wc_timer_backing
+          data:
+            value: "{{ value }}"
+
+  - switch:
+      # switch.ceiling_fan_with_light_son
+      - name: "ceiling fan with light son"
+        unique_id: ceiling_fan_with_light_son
+        state: "{{ states('input_boolean.wc_sound_backing') }}"
+        turn_on:
+          service: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.wc_sound_backing
+        turn_off:
+          service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.wc_sound_backing
+
+  # light.ceiling_fan_with_light — modern template light with color_temp.
+  # The legacy `light: - platform: template` was removed from Home Assistant,
+  # so the simulated light must live under the `template:` key like the others.
+  # Mireds = 1,000,000 / Kelvin.  3000 K -> 333 mireds (warm) ; 6500 K -> 154 (cool)
+  - light:
+      - name: "ceiling fan with light"
+        unique_id: ceiling_fan_with_light_light
+        state: "{{ states('input_boolean.wc_light_backing') }}"
+        temperature: >
+          {{ (1000000 / (states('input_number.wc_light_kelvin_backing') | float(3000))) | round | int }}
+        min_mireds: 154
+        max_mireds: 333
+        turn_on:
+          service: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.wc_light_backing
+        turn_off:
+          service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.wc_light_backing
+        set_temperature:
+          service: input_number.set_value
+          target:
+            entity_id: input_number.wc_light_kelvin_backing
+          data:
+            value: "{{ (1000000 / color_temp) | round | int }}"

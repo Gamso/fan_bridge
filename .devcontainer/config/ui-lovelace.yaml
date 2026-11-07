@@ -1,0 +1,23 @@
+title: FanBridge Card Dev
+views:
+  - title: Fan card
+    icon: mdi:fan
+    cards:
+      - type: custom:fan-bridge-card
+        fan_entity: fan.ceiling_fan_with_light
+        light_entity: light.ceiling_fan_with_light
+        timer_entity: number.ceiling_fan_with_light_minuteur
+        sound_entity: switch.ceiling_fan_with_light_son
+        name: Ventilateur salon
+        show_name: true
+
+      - type: entities
+        title: Backing helpers (debug)
+        entities:
+          - input_number.wc_fan_speed_backing
+          - input_select.wc_fan_direction_backing
+          - input_select.wc_fan_preset_backing
+          - input_boolean.wc_light_backing
+          - input_number.wc_light_kelvin_backing
+          - input_number.wc_timer_backing
+          - input_boolean.wc_sound_backing
