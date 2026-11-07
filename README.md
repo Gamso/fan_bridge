@@ -4,7 +4,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-A Home Assistant integration for smart ceiling fans. It **merges a local and a cloud entity of the same fan** (for example Tuya Local and Tuya) into one set of entities, with the local one in charge and the cloud one as a backup, maps the **buttons of a remote** to actions, and ships a **dashboard card** to control it all. The card also works on its own, with any `fan` entity.
+A Home Assistant integration for smart ceiling fans. It **merges a local and a cloud entity of the same fan** (for example Tuya Local and Tuya) into one set of entities, with the local one in charge and the cloud one as a backup, maps the **buttons of a remote** to actions, and ships a **dashboard card** to control it all.
 
 <p align="center">
   <img src="docs/images/card/en/preview.png" alt="The FanBridge card" width="420">
@@ -26,7 +26,7 @@ A Home Assistant integration for smart ceiling fans. It **merges a local and a c
 - A `fan` entity (two, to use a backup)
 - Optional: the **MQTT** integration for remotes read from MQTT topics (Zigbee2MQTT)
 
-The card alone works from Home Assistant **2024.8** and with any browser that supports CSS `color-mix()` (all evergreen browsers and the current companion apps).
+The card needs a browser that supports CSS `color-mix()` (all evergreen browsers and the current companion apps).
 
 ## Installation
 
@@ -39,8 +39,6 @@ Or by hand:
 3. Search for **FanBridge**, install it, and restart Home Assistant
 
 The dashboard card comes with it: no Lovelace resource to add.
-
-To use the card alone, see [Without the integration](docs/en/card.md#without-the-integration).
 
 ## Getting started
 
@@ -61,7 +59,7 @@ Then open **Configure** to add the light, the timer, the beep, the speed percent
 | [Configuration](docs/en/configuration.md) | Adding a fan, the options dialog and the entities |
 | [Main and backup fans](docs/en/fans.md) | Which entity is in charge, speed percentages, the merged entities |
 | [Remotes](docs/en/remotes.md) | Mapping remote buttons to actions |
-| [The card](docs/en/card.md) | What the card shows, its options, discovery, use without the integration |
+| [The card](docs/en/card.md) | What the card shows, its options and the entities it controls |
 | [Entities and services](docs/en/reference.md) | Every entity, attribute and service, the card's bundle |
 | [Development](docs/en/development.md) | Repository layout, tests, building the card, devcontainer |
 

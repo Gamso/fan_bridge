@@ -12,8 +12,17 @@ export interface HassEntity {
 
 export type HassEntities = Record<string, HassEntity>;
 
+// One row of the entity registry as the frontend exposes it (hass.entities).
+export interface EntityRegistryEntry {
+  entity_id: string;
+  device_id?: string | null;
+  platform?: string;
+  translation_key?: string;
+}
+
 export interface HomeAssistant {
   states: HassEntities;
+  entities?: Record<string, EntityRegistryEntry>;
   language?: string;
   locale?: { language?: string };
   callService(

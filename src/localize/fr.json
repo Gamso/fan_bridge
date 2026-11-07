@@ -4,6 +4,7 @@
     "subtitle": "Ventilateur connecté",
     "unavailable": "Indisponible",
     "entity_not_found": "Entité {entity} introuvable",
+    "not_bridge": "{entity} n'est pas un ventilateur FanBridge. Choisissez un ventilateur créé par l'intégration FanBridge.",
     "fallback_badge": "Secours"
   },
   "speed": {
@@ -54,6 +55,6 @@
     "dir_reverse": "Inverse",
     "managed": "Géré par l'intégration FanBridge : ventilateur de secours, lumière, minuterie, bip et pourcentages des vitesses se règlent dans son bouton Configurer.",
     "light_independent": "Lumière utilisable ventilateur éteint",
-    "standalone": "Choisis un ventilateur créé par l'intégration FanBridge (Paramètres → Appareils et services → FanBridge). Son secours, sa lumière, sa minuterie et son bip se règlent dans le bouton Configurer de l'intégration ; pour un ventilateur utilisé sans elle, passe par l'éditeur de code."
+    "standalone": "Choisis un ventilateur créé par l'intégration FanBridge (Paramètres → Appareils et services → FanBridge). Son secours, sa lumière, sa minuterie et son bip se règlent dans le bouton Configurer de l'intégration."
   }
 }

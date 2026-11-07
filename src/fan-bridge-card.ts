@@ -11,12 +11,10 @@ import {
   DEFAULT_SPEED_COUNT,
   percentageToSpeed,
   speedCount,
-  parseSpeedPercentages,
-  percentageToTableSpeed,
   speedToCommandPercentage,
   speedToPercentage,
   resolveEntities,
-  activeFanEntity,
+  isBridgeFan,
   fanSupports,
   fanSupportsDirection,
   FanFeature,
@@ -91,50 +89,24 @@ class FanBridgeCard extends LitElement {
 
   // ── Entity resolution (memoized) ────────────────────────────────────────────
   //
-  // Discovery scans every entity id, so it runs once per config change or
-  // entity-registry change (number of entities, or a resolved entity gone) —
-  // not on each of the dozens of getter reads of a render.
+  // The light, timer and beep are found in the entity registry, so this only
+  // runs when the config or the registry changes, not on each state update.
 
   private _resolved?: ResolvedEntities;
-  private _resolvedFor?: HomeAssistant["states"];
-  private _resolvedEntityCount = -1;
+  private _resolvedFor?: HomeAssistant["entities"];
 
   private get _entities(): ResolvedEntities {
     return this._resolved ?? resolveEntities(this.hass, this._config);
   }
 
   private _trackedIds(resolved: ResolvedEntities): string[] {
-    // Both fans are tracked: the primary coming back must trigger a re-render
-    // even while the card is showing the fallback.
-    return [
-      resolved.fan,
-      this._config.fan_entity,
-      this._config.fallback_fan_entity,
-      resolved.light,
-      resolved.timer,
-      resolved.sound,
-    ].filter((id): id is string => !!id);
-  }
-
-  private _needsResolve(): boolean {
-    if (!this._resolved) return true;
-    const states = this.hass?.states;
-    if (!states) return false;
-    if (states === this._resolvedFor) return false;
-    if (Object.keys(states).length !== this._resolvedEntityCount) return true;
-    if (activeFanEntity(this.hass, this._config) !== this._resolved.fan) return true;
-    return this._trackedIds(this._resolved).some((id) => !(id in states));
-  }
-
-  private _resolve(): void {
-    const states = this.hass?.states;
-    this._resolved = resolveEntities(this.hass, this._config);
-    this._resolvedFor = states;
-    this._resolvedEntityCount = states ? Object.keys(states).length : -1;
+    return [resolved.fan, resolved.light, resolved.timer, resolved.sound].filter(
+      (id): id is string => !!id,
+    );
   }
 
   // Only re-render when something the card displays changed: the config, the
-  // language, the set of entities, or the state of one of the tracked ones.
+  // language, the registry, or the state of one of the tracked entities.
   protected shouldUpdate(changed: PropertyValues): boolean {
     if (!this._config) return false;
     if ([...changed.keys()].some((k) => k !== "hass")) return true;
@@ -146,17 +118,16 @@ class FanBridgeCard extends LitElement {
     ) {
       return true;
     }
-    if (this._needsResolve()) return true;
+    if (this.hass.entities !== this._resolvedFor) return true;
     return this._trackedIds(this._resolved).some(
       (id) => old.states?.[id] !== this.hass.states?.[id],
     );
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed.has("_config") || this._needsResolve()) {
-      this._resolve();
-    } else {
-      this._resolvedFor = this.hass?.states;
+    if (changed.has("_config") || !this._resolved || this.hass?.entities !== this._resolvedFor) {
+      this._resolved = resolveEntities(this.hass, this._config);
+      this._resolvedFor = this.hass?.entities;
     }
   }
 
@@ -180,22 +151,12 @@ class FanBridgeCard extends LitElement {
     const fan = this._fanState;
     if (!isFanOn(fan)) return 0;
     const pct = Number(fan.attributes?.percentage ?? 0);
-    const table = this._speedTable;
-    return table ? percentageToTableSpeed(pct, table) : percentageToSpeed(pct, this._speedCount);
-  }
-
-  // User-defined percentage of each speed for the fan currently in use.
-  private get _speedTable(): number[] | undefined {
-    const onFallback =
-      !!this._config.fallback_fan_entity && this._entities.fan === this._config.fallback_fan_entity;
-    return parseSpeedPercentages(
-      onFallback ? this._config.fallback_speed_percentages : this._config.speed_percentages,
-    );
+    return percentageToSpeed(pct, this._speedCount);
   }
 
   // Number of segments of the speed bar, derived from percentage_step.
   private get _speedCount(): number {
-    return this._speedTable?.length ?? speedCount(this._fanState);
+    return speedCount(this._fanState);
   }
 
   private get _fanSupportsDirection(): boolean {
@@ -391,7 +352,7 @@ class FanBridgeCard extends LitElement {
     } else {
       this._call("fan", "set_percentage", {
         entity_id: this._entities.fan,
-        percentage: this._speedTable?.[speed - 1] ?? speedToCommandPercentage(speed, this._speedCount),
+        percentage: speedToCommandPercentage(speed, this._speedCount),
       });
     }
   }
@@ -792,6 +753,14 @@ class FanBridgeCard extends LitElement {
       </ha-card>`;
     }
 
+    if (!isBridgeFan(fan)) {
+      return html`<ha-card>
+        <div class="error" role="alert">
+          ${this._t("card.not_bridge", { entity: this._config.fan_entity })}
+        </div>
+      </ha-card>`;
+    }
+
     const speed = this._currentSpeed;
     const isUnavailable = isFanUnavailable(fan);
     // The light follows the fan unless configured as independent, in which
@@ -803,13 +772,8 @@ class FanBridgeCard extends LitElement {
       this._config.name ||
       fan.attributes?.friendly_name ||
       this._t("card.name_default");
-    // The card's own backup fan, or a fan merged by the integration that
-    // reports it is running on its backup.
-    const onFallback =
-      (!!this._config.fallback_fan_entity &&
-        this._entities.fan === this._config.fallback_fan_entity &&
-        this._entities.fan !== this._config.fan_entity) ||
-      fan.attributes?.using_backup === true;
+    // The integration reports when the fan is running on its backup.
+    const onFallback = fan.attributes?.using_backup === true;
     const active = this._isOn && !isUnavailable;
 
     return html`

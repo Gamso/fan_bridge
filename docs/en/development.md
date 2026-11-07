@@ -10,7 +10,7 @@ custom_components/fan_bridge/   The integration
 src/                            The card's sources (TypeScript, Lit)
 test/                           The card's tests (Vitest)
 tests/                          The integration's tests (pytest)
-dist/fan-bridge-card.js         The same bundle, for manual installs (committed)
+dist/fan-bridge-card.js         The same bundle (committed)
 docs/                           This documentation (en/, fr/, images/)
 .devcontainer/                  A Home Assistant to try it in
 ```

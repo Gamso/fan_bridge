@@ -4,6 +4,7 @@
     "subtitle": "Connected fan",
     "unavailable": "Unavailable",
     "entity_not_found": "Entity {entity} not found",
+    "not_bridge": "{entity} is not a FanBridge fan. Pick a fan created by the FanBridge integration.",
     "fallback_badge": "Backup"
   },
   "speed": {
@@ -54,6 +55,6 @@
     "dir_reverse": "Reverse",
     "managed": "Managed by the FanBridge integration: backup fan, light, timer, beep and speed percentages are set in its Configure dialog.",
     "light_independent": "Light works while the fan is off",
-    "standalone": "Pick a fan created by the FanBridge integration (Settings → Devices & services → FanBridge). Its backup, light, timer and beep are set in the integration's Configure dialog; for a fan used without it, use the code editor."
+    "standalone": "Pick a fan created by the FanBridge integration (Settings → Devices & services → FanBridge). Its backup, light, timer and beep are set in the integration's Configure dialog."
   }
 }

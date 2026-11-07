@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { property, state } from "lit/decorators.js";
 import { localize, TranslationKey } from "./localize/localize";
-import { FanBridgeCardConfig, fanSupportsDirection } from "./types";
+import { FanBridgeCardConfig, fanSupportsDirection, isBridgeFan } from "./types";
 import { fireEvent, HomeAssistant } from "./ha-types";
 
 // Ensure the HA form components are registered (they ship with the frontend
@@ -28,16 +28,12 @@ class FanBridgeCardEditor extends LitElement {
     this._config = { ...config };
   }
 
-  // A fan merged by the FanBridge integration: its backup, light, timer, beep
-  // and speed percentages are set in the integration, not on the card.
   private get _managed(): boolean {
-    const attributes = this.hass?.states?.[this._config?.fan_entity]?.attributes;
-    return typeof attributes?.using_backup === "boolean";
+    return isBridgeFan(this.hass?.states?.[this._config?.fan_entity]);
   }
 
-  // The visual editor only picks the fan and a few display options. The
-  // entities of a fan used without the integration (backup, light, timer, beep,
-  // speed percentages) stay available in the YAML editor.
+  // The visual editor only picks the fan and a few display options: the backup,
+  // light, timer, beep and speeds belong to the integration.
   private get _schema() {
     const schema: Record<string, unknown>[] = [
       { name: "fan_entity", required: true, selector: { entity: { domain: "fan" } } },
