@@ -97,6 +97,9 @@ class RemoteManager:
                 unsub = None
             if unsub is not None:
                 unsubscribers.append(unsub)
+        _LOGGER.info(
+            "%s: listening to %d of %d remote button(s)", self._group.name, len(unsubscribers), len(self._mappings)
+        )
         return unsubscribers
 
     async def _subscribe_mqtt(self, mapping: dict[str, Any]) -> Callable[[], None] | None:
@@ -110,7 +113,9 @@ class RemoteManager:
         @callback
         def _message(msg: Any) -> None:
             payload = msg.payload.decode() if isinstance(msg.payload, bytes) else str(msg.payload)
-            if not expected or payload == expected:
+            matched = not expected or payload == expected
+            _LOGGER.debug("%s: message on %s: %r (expected %r): %s", self._group.name, topic, payload, expected, "match" if matched else "ignored")
+            if matched:
                 self.hass.async_create_task(self.async_run(mapping))
 
         try:
@@ -157,6 +162,7 @@ class RemoteManager:
     async def async_run(self, mapping: dict[str, Any]) -> None:
         """Run the action of a mapping."""
         action = mapping.get(CONF_REMOTE_ACTION)
+        _LOGGER.debug("%s: remote button pressed, running %s", self._group.name, action)
         try:
             if action in _SIMPLE_ACTIONS:
                 key, platform, service, data = _SIMPLE_ACTIONS[action]
