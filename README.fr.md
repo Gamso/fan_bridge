@@ -4,7 +4,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-Une intégration Home Assistant pour les ventilateurs de plafond connectés. Elle **fusionne une entité locale et une entité cloud du même ventilateur** (par exemple Tuya Local et Tuya) en un seul jeu d'entités, la locale étant prioritaire et la cloud servant de secours, associe les **boutons d'une télécommande** à des actions, et fournit une **carte de tableau de bord** pour tout commander. La carte fonctionne aussi seule, avec n'importe quelle entité `fan`.
+Une intégration Home Assistant pour les ventilateurs de plafond connectés. Elle **fusionne une entité locale et une entité cloud du même ventilateur** (par exemple Tuya Local et Tuya) en un seul jeu d'entités, la locale étant prioritaire et la cloud servant de secours, associe les **boutons d'une télécommande** à des actions, et fournit une **carte de tableau de bord** pour tout commander.
 
 <p align="center">
   <img src="docs/images/card/fr/preview.png" alt="La carte FanBridge" width="420">
@@ -26,7 +26,7 @@ Une intégration Home Assistant pour les ventilateurs de plafond connectés. Ell
 - Une entité `fan` (deux pour utiliser un secours)
 - En option : l'intégration **MQTT** pour les télécommandes lues sur des topics MQTT (Zigbee2MQTT)
 
-La carte seule fonctionne dès Home Assistant **2024.8**, avec tout navigateur qui gère le `color-mix()` CSS (tous les navigateurs récents et les applications mobiles actuelles).
+La carte demande un navigateur qui gère le `color-mix()` CSS (tous les navigateurs récents et les applications mobiles actuelles).
 
 ## Installation
 
@@ -39,8 +39,6 @@ Ou à la main :
 3. Cherchez **FanBridge**, installez-la, puis redémarrez Home Assistant
 
 La carte arrive avec l'intégration : aucune ressource Lovelace à ajouter.
-
-Pour utiliser la carte seule, voir [Sans l'intégration](docs/fr/card.md#sans-lintégration).
 
 ## Premiers pas
 
@@ -61,7 +59,7 @@ Ouvrez ensuite **Configurer** pour ajouter la lumière, la minuterie, le bip, le
 | [Configuration](docs/fr/configuration.md) | Ajouter un ventilateur, la fenêtre d'options et les entités |
 | [Principal et secours](docs/fr/fans.md) | Quelle entité est en service, pourcentages des vitesses, entités fusionnées |
 | [Télécommandes](docs/fr/remotes.md) | Associer les boutons d'une télécommande à des actions |
-| [La carte](docs/fr/card.md) | Ce que montre la carte, ses options, la détection, l'usage sans l'intégration |
+| [La carte](docs/fr/card.md) | Ce que montre la carte, ses options et les entités qu'elle commande |
 | [Entités et services](docs/fr/reference.md) | Toutes les entités, attributs et services, le fichier de la carte |
 | [Développement](docs/fr/development.md) | Organisation du dépôt, tests, construction de la carte, devcontainer |
 

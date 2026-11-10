@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  fanBaseName,
+  isBridgeFan,
   percentageToSpeed,
   resolveEntities,
   speedCount,
@@ -109,72 +109,48 @@ describe("speed mapping per count", () => {
   });
 });
 
-describe("fanBaseName", () => {
-  it("strips the domain", () => {
-    expect(fanBaseName("fan.ceiling_fan_with_light")).toBe("ceiling_fan_with_light");
+describe("isBridgeFan", () => {
+  it("is true for a fan that reports using_backup", () => {
+    expect(isBridgeFan(entity("fan.f", "on", { using_backup: false }))).toBe(true);
+    expect(isBridgeFan(entity("fan.f", "on", { using_backup: true }))).toBe(true);
   });
-  it("returns null without an entity", () => {
-    expect(fanBaseName(undefined)).toBeNull();
+  it("is false for any other fan, or a missing one", () => {
+    expect(isBridgeFan(entity("fan.f", "on", { using_backup: undefined }))).toBe(false);
+    expect(isBridgeFan(undefined)).toBe(false);
   });
 });
 
 describe("resolveEntities", () => {
-  it("discovers the CREATE Windcalm entities", () => {
+  it("finds the light, timer and beep of the fan's device by translation key", () => {
     const hass = makeHass([
-      entity("fan.ceiling_fan_with_light", "on"),
-      entity("light.ceiling_fan_with_light", "on"),
-      entity("number.ceiling_fan_with_light_minuteur", "0"),
-      entity("switch.ceiling_fan_with_light_son", "off"),
+      entity("fan.f", "on"),
+      entity("light.f_light", "on"),
+      entity("select.f_timer", "off"),
+      entity("switch.f_sound", "off"),
     ]);
-    expect(resolveEntities(hass, { fan_entity: "fan.ceiling_fan_with_light" })).toMatchObject({
-      fan: "fan.ceiling_fan_with_light",
-      light: "light.ceiling_fan_with_light",
-      timer: "number.ceiling_fan_with_light_minuteur",
-      sound: "switch.ceiling_fan_with_light_son",
+    expect(resolveEntities(hass, { fan_entity: "fan.f" })).toEqual({
+      fan: "fan.f",
+      light: "light.f_light",
+      timer: "select.f_timer",
+      sound: "switch.f_sound",
     });
   });
 
-  it("falls back to a select timer (Klassfan)", () => {
-    const hass = makeHass([
-      entity("fan.klassfan_ceiling_fan", "on"),
-      entity("select.klassfan_ceiling_fan_minuteur", "off"),
-    ]);
-    expect(resolveEntities(hass, { fan_entity: "fan.klassfan_ceiling_fan" }).timer).toBe(
-      "select.klassfan_ceiling_fan_minuteur",
-    );
+  it("follows entity ids the user renamed", () => {
+    const hass = makeHass([entity("fan.f", "on"), entity("light.salon_lamp", "on")]);
+    expect(resolveEntities(hass, { fan_entity: "fan.f" }).light).toBe("light.salon_lamp");
   });
 
-  it("lets explicit overrides win", () => {
-    const hass = makeHass([
-      entity("fan.f", "on"),
-      entity("light.f", "on"),
-      entity("light.other", "on"),
-    ]);
-    expect(resolveEntities(hass, { fan_entity: "fan.f", light_entity: "light.other" }).light).toBe(
-      "light.other",
-    );
-  });
-});
-
-import { parseSpeedPercentages, percentageToTableSpeed } from "../src/types";
-
-describe("custom speed percentages", () => {
-  const table = [1, 21, 41, 60, 80, 100];
-
-  it("accepts lists and comma-separated text", () => {
-    expect(parseSpeedPercentages(table)).toEqual(table);
-    expect(parseSpeedPercentages("1, 21 41;60,80 ,100")).toEqual(table);
+  it("ignores the entities of another device or integration", () => {
+    const hass = makeHass([entity("fan.f", "on"), entity("light.f_light", "on"), entity("light.other", "on")]);
+    hass.entities!["light.other"].device_id = "elsewhere";
+    hass.entities!["light.f_light"].platform = "tuya";
+    expect(resolveEntities(hass, { fan_entity: "fan.f" }).light).toBeUndefined();
   });
 
-  it("rejects invalid lists", () => {
-    for (const bad of ["", "1, x", [3, 2], [0, 5], [10, 200], [], undefined, "1,1"]) {
-      expect(parseSpeedPercentages(bad)).toBeUndefined();
-    }
-  });
-
-  it("maps a percentage to the highest speed not above it", () => {
-    expect([0, 1, 20, 21, 59, 60, 79, 80, 100].map((p) => percentageToTableSpeed(p, table))).toEqual(
-      [0, 1, 1, 2, 3, 4, 4, 5, 6],
-    );
+  it("finds nothing without a registry", () => {
+    const hass = makeHass([entity("fan.f", "on"), entity("light.f_light", "on")]);
+    delete hass.entities;
+    expect(resolveEntities(hass, { fan_entity: "fan.f" })).toEqual({ fan: "fan.f" });
   });
 });

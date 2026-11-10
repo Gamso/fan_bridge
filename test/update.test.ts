@@ -8,8 +8,16 @@ const fan = (pct: number) =>
 
 function withStates(hass: HomeAssistant, ...changes: HassEntity[]): HomeAssistant {
   const states = { ...hass.states };
-  for (const e of changes) states[e.entity_id] = e;
-  return { ...hass, states };
+  // A new registry object only when an entity gets registered, as in HA.
+  let entities = hass.entities;
+  for (const e of changes) {
+    states[e.entity_id] = e;
+    if (e.entity_id.startsWith("light.")) {
+      entities = { ...entities };
+      entities[e.entity_id] = { entity_id: e.entity_id, device_id: "device", platform: "fan_bridge", translation_key: "light" };
+    }
+  }
+  return { ...hass, states, entities };
 }
 
 afterEach(() => {
@@ -43,7 +51,7 @@ describe("update filtering (audit P1)", () => {
     expect($(el, ".ctrl-btn.light")?.classList.contains("on")).toBe(true);
   });
 
-  it("discovers an entity added after the first render", async () => {
+  it("picks up an entity registered after the first render", async () => {
     const hass = makeHass([fan(50)]);
     const el = await mountCard({ fan_entity: FAN }, hass);
     expect($(el, ".ctrl-btn.light")).toBeNull();

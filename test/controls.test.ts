@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { $, $$, entity, makeHass, mountCard, openTempPanel } from "./helpers";
+import { $, entity, makeHass, mountCard, openTempPanel } from "./helpers";
 
 const FAN = "fan.f";
 const fan = (attributes: Record<string, unknown> = {}) =>
@@ -116,38 +116,6 @@ describe("service calls (audit B6, B7)", () => {
   });
 });
 
-describe("fallback fan with its own speed percentages", () => {
-  const config = {
-    fan_entity: "fan.off",
-    fallback_fan_entity: "fan.on",
-    fallback_speed_percentages: "1, 21, 41, 60, 80, 100",
-  };
-  const cloud = (percentage: number) =>
-    entity("fan.on", "on", { supported_features: 1 | 32 | 16, percentage, percentage_step: 1 });
-  const local = entity("fan.off", "unavailable", { supported_features: 1 | 32 | 16 });
-
-  it("reads and sends the fallback's own percentages", async () => {
-    const hass = makeHass([local, cloud(41)]);
-    const el = await mountCard(config, hass);
-    expect($$(el, ".speed-seg")).toHaveLength(6);
-    expect($(el, ".speed-seg.active")?.textContent?.trim()).toBe("3");
-    $$(el, ".speed-seg")[1].click();
-    expect(hass.callService).toHaveBeenCalledWith("fan", "set_percentage", {
-      entity_id: "fan.on",
-      percentage: 21,
-    });
-  });
-
-  it("ignores them while the primary fan is in use", async () => {
-    const hass = makeHass([
-      entity("fan.off", "on", { supported_features: 1 | 32 | 16, percentage: 33, percentage_step: 16.67 }),
-      cloud(41),
-    ]);
-    const el = await mountCard(config, hass);
-    expect($(el, ".speed-seg.active")?.textContent?.trim()).toBe("2");
-  });
-});
-
 describe("dial", () => {
   const sixSpeed = () =>
     makeHass([entity(FAN, "on", { supported_features: 1 | 16 | 32, percentage: 50, percentage_step: 100 / 6 })]);
@@ -176,17 +144,6 @@ describe("dial", () => {
     expect($(el, ".temp-slider")).toBeNull();
     await openTempPanel(el);
     expect($(el, ".temp-slider")).not.toBeNull();
-  });
-
-  it("flags the backup fan with a badge", async () => {
-    const hass = makeHass([
-      entity("fan.a", "unavailable", { supported_features: 1 | 16 | 32 }),
-      entity("fan.b", "on", { supported_features: 1 | 16 | 32, percentage: 50 }),
-    ]);
-    const el = await mountCard({ fan_entity: "fan.a", fallback_fan_entity: "fan.b" }, hass);
-    expect($(el, ".badge")?.textContent?.trim()).toBe("Backup");
-    const primary = await mountCard({ fan_entity: "fan.b", fallback_fan_entity: "fan.a" }, hass);
-    expect($(primary, ".badge")).toBeNull();
   });
 
   it("flags a merged fan that reports it runs on its backup", async () => {

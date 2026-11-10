@@ -2,7 +2,7 @@
 
 [← Documentation](../../README.fr.md#documentation) · [English](../en/card.md)
 
-Une carte de tableau de bord pour commander un ventilateur de plafond, dans un style verre sombre : un cadran rond des vitesses, un sens des pales été/hiver, et des pastilles pour le préréglage, l'oscillation, la lumière, la minuterie d'arrêt et le bip. Elle est livrée avec l'intégration et se charge seule : aucune ressource Lovelace à ajouter. Elle fonctionne aussi **seule**, avec n'importe quelle entité `fan`, voir [Sans l'intégration](#sans-lintégration).
+Une carte de tableau de bord pour commander un ventilateur de plafond, dans un style verre sombre : un cadran rond des vitesses, un sens des pales été/hiver, et des pastilles pour le préréglage, l'oscillation, la lumière, la minuterie d'arrêt et le bip. Elle est livrée avec l'intégration et se charge seule : aucune ressource Lovelace à ajouter. Elle ne fonctionne qu'avec un ventilateur créé par l'intégration : le secours, les vitesses, la lumière, la minuterie et le bip s'y règlent.
 
 <p align="center">
   <img src="../images/card/fr/preview.png" alt="La carte FanBridge" width="380">
@@ -17,9 +17,9 @@ type: custom:fan-bridge-card
 fan_entity: fan.salon
 ```
 
-La lumière, la minuterie et le bip sont détectés à partir du nom du ventilateur, cette ligne suffit donc. Rechargez la page du navigateur après l'installation ou la mise à jour de l'intégration. Une nouvelle carte n'est pas ajoutée seule à un tableau de bord : ajoutez-en une par ventilateur.
+`fan_entity` est le ventilateur créé par l'intégration (`fan.<nom>`), et cela suffit : la carte trouve seule sa lumière, sa minuterie et son bip, voir [Les entités qu'elle commande](#les-entités-quelle-commande). Rechargez la page du navigateur après l'installation ou la mise à jour de l'intégration. Une nouvelle carte n'est pas ajoutée seule à un tableau de bord : ajoutez-en une par ventilateur.
 
-Avec un ventilateur fusionné par l'intégration, l'éditeur visuel ne demande que ce qui relève de la carte (nom, sens, lumière éteinte) : le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
+L'éditeur visuel ne demande que le ventilateur et ce qui relève de la carte (nom, sens, lumière éteinte). Le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
 
 ## Ce qu'elle affiche
 
@@ -59,14 +59,11 @@ Seul `fan_entity` est obligatoire.
 
 | Option | Type | Défaut | Description |
 | --- | --- | --- | --- |
-| `fan_entity` | texte | **obligatoire** | L'entité `fan` à commander. |
+| `fan_entity` | texte | **obligatoire** | Le ventilateur créé par l'intégration FanBridge. Tout autre ventilateur est refusé avec un message. |
 | `name` | texte | nom du ventilateur | Titre de la carte. |
 | `show_name` | booléen | `true` | Afficher le titre de la carte. |
 | `summer_direction` | texte | `forward` | Direction brute (`forward` / `reverse`) qui correspond à l'été. |
 | `light_independent` | booléen | `false` | Garder la lumière utilisable ventilateur éteint. |
-| `light_entity` | texte | détectée | Entité `light` du ventilateur. |
-| `timer_entity` | texte | détectée | Entité de minuterie d'arrêt (`number` ou `select`). |
-| `sound_entity` | texte | détectée | Entité `switch` du bip. |
 
 ## Thème
 
@@ -76,50 +73,13 @@ Le texte, les surfaces et les bordures viennent du thème actif de Home Assistan
 | --- | --- | --- |
 | `--fan-bridge-card-accent` | `#2fd1a0` | Cadran, commandes actives, halo et effets |
 
-## Sans l'intégration
+## Les entités qu'elle commande
 
-La carte fonctionne seule avec n'importe quelle entité `fan`, et fait alors elle-même le travail de l'intégration, avec des options en plus :
+La carte commande le ventilateur indiqué, et retrouve la lumière, la minuterie d'arrêt et le bip **du même appareil FanBridge** dans le registre des entités. Elle ne dépend pas de leurs noms : renommer une entité ne casse donc pas la carte. Une commande dont l'entité n'existe pas (un ventilateur sans lumière, ou un rôle laissé vide dans l'intégration) est masquée.
 
-```yaml
-type: custom:fan-bridge-card
-fan_entity: fan.ceiling_fan_with_light
-fallback_fan_entity: fan.ceiling_fan_with_light_cloud # utilisé seulement quand fan_entity est indisponible
-speed_percentages: [17, 33, 50, 67, 83, 100] # pourcentage de chaque vitesse de fan_entity
-fallback_speed_percentages: [1, 21, 41, 60, 80, 100] # idem pour fallback_fan_entity
-fallback_light_entity: light.ceiling_fan_with_light_cloud
-fallback_timer_entity: number.ceiling_fan_with_light_cloud_timer
-fallback_sound_entity: switch.ceiling_fan_with_light_cloud_son
-```
+La minuterie est un `select` ou un `number` selon l'entité d'origine : la carte appelle `select.select_option` ou `number.set_value` en conséquence, et affiche les options que rapporte un `select`.
 
-| Option | Type | Défaut | Description |
-| --- | --- | --- | --- |
-| `fallback_fan_entity` | texte | aucun | Second ventilateur (le jumeau cloud d'un ventilateur local), utilisé seulement quand `fan_entity` est `unavailable` / `unknown`. Sa lumière, sa minuterie et son bip sont détectés d'après son propre nom, ou réglés avec les trois options `fallback_*` ci-dessous ; `light_entity`, `timer_entity` et `sound_entity` ne valent que pour `fan_entity`. |
-| `speed_percentages` | liste | d'après `percentage_step` | Pourcentage de chaque vitesse, de la plus basse à la plus haute. La carte envoie ces valeurs et lit la vitesse comme la plus haute qui n'est pas au-dessus du pourcentage du ventilateur. 10 valeurs au plus, strictement croissantes. |
-| `fallback_speed_percentages` | liste | d'après `percentage_step` | Idem, pour `fallback_fan_entity`. |
-| `fallback_light_entity` | texte | détectée | Lumière utilisée quand le ventilateur de secours est en service. |
-| `fallback_timer_entity` | texte | détectée | Minuterie utilisée quand le ventilateur de secours est en service. |
-| `fallback_sound_entity` | texte | détectée | Interrupteur du bip utilisé quand le ventilateur de secours est en service. |
-
-Préférez l'intégration quand c'est possible : elle sert aussi aux automatisations, aux scripts et aux assistants vocaux, ce que la carte seule ne sait pas faire.
-
-### Installation manuelle
-
-1. Téléchargez `dist/fan-bridge-card.js` depuis ce dépôt.
-2. Copiez-le dans `<config>/www/fan-bridge-card.js` (créez le dossier `www` au besoin, puis redémarrez Home Assistant une fois pour que `/local/` soit servi).
-3. **Paramètres → Tableaux de bord → ⋮ → Ressources → Ajouter une ressource**, saisissez `/local/fan-bridge-card.js?v=1.0.0` et choisissez **Module JavaScript**. Changez la valeur de `?v=` à chaque mise à jour pour contourner le cache du navigateur.
-4. Actualisez le navigateur : la console affiche `FAN-BRIDGE-CARD v1.0.0`. Vérifiez que c'est la version installée.
-
-## Détection automatique
-
-À partir de `fan.ceiling_fan_with_light`, la carte extrait l'identifiant de base `ceiling_fan_with_light` et cherche, pour chaque rôle :
-
-1. une entité qui porte exactement le nom du ventilateur (`light.ceiling_fan_with_light` ; lumière et minuterie seulement, car un interrupteur du même nom est l'interrupteur marche/arrêt) ;
-2. sinon, parmi les entités nommées `<base>_…`, celle dont le suffixe est connu : `light` / `lumiere` / `lamp` pour la lumière, `timer` / `minuteur` / `countdown` pour la minuterie, `sound` / `son` / `beep` / `bip` / `buzzer` pour le bip ;
-3. sinon la seule entité restante `<base>_…` du domaine, sauf si son suffixe désigne une autre fonction (`oscillation`, `swing`, `child_lock`, ...) ou un autre rôle.
-
-Les entités d'un autre ventilateur dont le nom prolonge celui-ci sont ignorées : avec `fan.ceiling_fan` et `fan.ceiling_fan_2`, la première carte ne prend jamais `light.ceiling_fan_2_light`. Quand plusieurs entités conviennent aussi bien, la carte n'en choisit aucune et l'éditeur liste les candidates : choisissez-en une là, ou avec `light_entity`, `timer_entity` ou `sound_entity`. Les commandes dont l'entité n'est pas trouvée sont masquées.
-
-La minuterie est cherchée d'abord dans le domaine `number`, puis dans `select`. La carte appelle `number.set_value` ou `select.select_option` selon le domaine, et affiche les options qu'un `select` annonce.
+Si l'entité n'est pas un ventilateur FanBridge, la carte affiche un message qui en demande un.
 
 ## Correspondance des vitesses
 

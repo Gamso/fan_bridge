@@ -2,7 +2,7 @@
 
 [← Documentation](../../README.md#documentation) · [Français](../fr/card.md)
 
-A dashboard card to control a ceiling fan, in a dark glass style: a round speed dial, a summer/winter blade direction, and chips for the preset, oscillation, light, stop timer and beep. It ships with the integration and loads by itself: no Lovelace resource to add. It also works **on its own**, with any `fan` entity, see [Without the integration](#without-the-integration).
+A dashboard card to control a ceiling fan, in a dark glass style: a round speed dial, a summer/winter blade direction, and chips for the preset, oscillation, light, stop timer and beep. It ships with the integration and loads by itself: no Lovelace resource to add. It only works with a fan created by the integration: the backup fan, the speeds, the light, the timer and the beep are all set there.
 
 <p align="center">
   <img src="../images/card/en/preview.png" alt="The FanBridge card" width="380">
@@ -17,9 +17,9 @@ type: custom:fan-bridge-card
 fan_entity: fan.living_room
 ```
 
-The light, the timer and the beep are discovered from the name of the fan, so that is enough. Reload the browser page after installing or updating the integration. A new card is not added to a dashboard by itself: add one per fan.
+`fan_entity` is the fan created by the integration (`fan.<name>`), and that is enough: the card finds its light, timer and beep by itself, see [Which entities it controls](#which-entities-it-controls). Reload the browser page after installing or updating the integration. A new card is not added to a dashboard by itself: add one per fan.
 
-With a fan merged by the integration the visual editor only asks for what belongs to the card (name, direction, light while off): the backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
+The visual editor only asks for the fan and what belongs to the card (name, direction, light while off). The backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
 
 ## What it shows
 
@@ -59,14 +59,11 @@ Only `fan_entity` is required.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `fan_entity` | string | **required** | The `fan` entity to control. |
+| `fan_entity` | string | **required** | The fan created by the FanBridge integration. Any other fan is refused with a message. |
 | `name` | string | fan friendly name | Card title. |
 | `show_name` | boolean | `true` | Show the card title. |
 | `summer_direction` | string | `forward` | Which raw direction (`forward` / `reverse`) is summer mode. |
 | `light_independent` | boolean | `false` | Keep the light usable while the fan is off. |
-| `light_entity` | string | auto-discovered | `light` entity of the fan. |
-| `timer_entity` | string | auto-discovered | Stop-timer entity (`number` or `select`). |
-| `sound_entity` | string | auto-discovered | `switch` entity of the beep. |
 
 ## Theming
 
@@ -76,50 +73,13 @@ Text, surfaces and borders come from the active Home Assistant theme. The accent
 | --- | --- | --- |
 | `--fan-bridge-card-accent` | `#2fd1a0` | Dial, active controls, glow and effects |
 
-## Without the integration
+## Which entities it controls
 
-The card works on its own with any `fan` entity, and then does the work of the integration itself, with extra options:
+The card controls the fan you give it, and finds the light, the stop timer and the beep of **the same FanBridge device** in the entity registry. It does not depend on their names, so renaming an entity does not break the card. A control whose entity does not exist (a fan without a light, or a role left empty in the integration) is hidden.
 
-```yaml
-type: custom:fan-bridge-card
-fan_entity: fan.ceiling_fan_with_light
-fallback_fan_entity: fan.ceiling_fan_with_light_cloud # used only while fan_entity is unavailable
-speed_percentages: [17, 33, 50, 67, 83, 100] # percentage of each speed of fan_entity
-fallback_speed_percentages: [1, 21, 41, 60, 80, 100] # same for fallback_fan_entity
-fallback_light_entity: light.ceiling_fan_with_light_cloud
-fallback_timer_entity: number.ceiling_fan_with_light_cloud_timer
-fallback_sound_entity: switch.ceiling_fan_with_light_cloud_son
-```
+The timer is a `select` or a `number` according to the underlying entity: the card calls `select.select_option` or `number.set_value` accordingly, and shows the options a `select` reports.
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `fallback_fan_entity` | string | none | Second fan (the cloud twin of a local fan), used only while `fan_entity` is `unavailable` / `unknown`. Its light, timer and beep are discovered from its own name, or set with the three `fallback_*` options below; `light_entity`, `timer_entity` and `sound_entity` apply to `fan_entity` only. |
-| `speed_percentages` | list | from `percentage_step` | Percentage of each speed, lowest first. The card sends these values and reads the speed as the highest one not above the fan's percentage. Max 10 values, strictly increasing. |
-| `fallback_speed_percentages` | list | from `percentage_step` | Same, for `fallback_fan_entity`. |
-| `fallback_light_entity` | string | discovered | Light used while the backup fan is in charge. |
-| `fallback_timer_entity` | string | discovered | Timer used while the backup fan is in charge. |
-| `fallback_sound_entity` | string | discovered | Beep switch used while the backup fan is in charge. |
-
-Prefer the integration when you can: it also serves automations, scripts and voice assistants, which the card alone cannot.
-
-### Manual installation
-
-1. Download `dist/fan-bridge-card.js` from this repository.
-2. Copy it to `<config>/www/fan-bridge-card.js` (create the `www` folder if needed, then restart Home Assistant once so `/local/` is served).
-3. **Settings → Dashboards → ⋮ → Resources → Add resource**, enter `/local/fan-bridge-card.js?v=1.0.0` and choose **JavaScript module**. Change the `?v=` value after each update to bypass the browser cache.
-4. Refresh the browser: the console prints `FAN-BRIDGE-CARD v1.0.0`. Check that it is the version you installed.
-
-## Auto-discovery
-
-From `fan.ceiling_fan_with_light` the card extracts the base id `ceiling_fan_with_light` and, for each role, looks for:
-
-1. an entity named exactly like the fan (`light.ceiling_fan_with_light`; light and timer only, because a switch named like the fan is its power switch);
-2. otherwise, among the entities named `<base>_…`, the one with a known suffix: `light` / `lumiere` / `lamp` for the light, `timer` / `minuteur` / `countdown` for the timer, `sound` / `son` / `beep` / `bip` / `buzzer` for the beep;
-3. otherwise the only remaining `<base>_…` entity of the domain, unless its suffix names another feature (`oscillation`, `swing`, `child_lock`, ...) or another role.
-
-Entities of another fan whose name extends this one are ignored: with `fan.ceiling_fan` and `fan.ceiling_fan_2`, the first card never picks `light.ceiling_fan_2_light`. When several entities match equally well, the card picks none and the editor lists the candidates: choose one there, or with `light_entity`, `timer_entity` or `sound_entity`. Controls for entities that are not found are hidden.
-
-The timer is looked up in the `number` domain first, then in `select`. The card calls `number.set_value` or `select.select_option` according to the domain, and shows the options a `select` reports.
+If the entity is not a FanBridge fan, the card shows a message asking for one.
 
 ## Speed mapping
 
