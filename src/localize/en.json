@@ -1,7 +1,6 @@
 {
   "card": {
     "name_default": "Ceiling fan",
-    "subtitle": "Connected fan",
     "unavailable": "Unavailable",
     "entity_not_found": "Entity {entity} not found",
     "not_bridge": "{entity} is not a FanBridge fan. Pick a fan created by the FanBridge integration.",
@@ -9,7 +8,6 @@
   },
   "speed": {
     "label": "SPEED",
-    "off": "Off",
     "s1": "Gentle",
     "s2": "Soft",
     "s3": "Moderate",
@@ -32,7 +30,6 @@
     "color_temp": "Color temperature",
     "temp_warm": "Warm",
     "temp_cool": "Cool",
-    "direction": "Season",
     "dir_summer": "Summer",
     "dir_winter": "Winter",
     "timer": "Timer",
@@ -46,7 +43,6 @@
     "dir_winter_hint": "Air pulled up"
   },
   "editor": {
-    "title": "Fan card settings",
     "name": "Card name",
     "fan_entity": "Fan entity",
     "show_name": "Show card name",
