@@ -65,6 +65,13 @@ describe("FanBridge fan only", () => {
   });
 });
 
+describe("card picker", () => {
+  it("links the documentation", () => {
+    const card = window.customCards?.find((c) => c.type === "fan-bridge-card");
+    expect(card?.documentationURL).toMatch(/docs\/en\/card\.md$/);
+  });
+});
+
 describe("sizing (audit A6)", () => {
   it("grows with the rendered rows", async () => {
     const plain = await mountCard({ fan_entity: FAN, show_name: false }, makeHass([fan(16 | 32)]));
