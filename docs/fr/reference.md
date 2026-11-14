@@ -37,6 +37,21 @@ L'interrupteur du bip en service. Mêmes attributs.
 
 Les boutons de télécommande ne sont pas des entités : ils sont stockés dans les options et listés dans **Configurer → Télécommandes**, voir [Télécommandes](remotes.md). Chaque bouton appuyé appelle les services des entités fusionnées (`fan.toggle`, `fan.increase_speed`, `fan.set_percentage`, `fan.set_direction`, `fan.oscillate`, `fan.set_preset_mode`, `light.toggle`, `switch.toggle`, ...).
 
+## Événement du journal
+
+`fan_bridge_source_changed` est émis quand l'entité de secours d'un rôle prend le relais, ou le rend à l'entité principale. Il apparaît dans le journal (« switched to its backup … », « is back on its main entity … ») et peut déclencher des automatisations.
+
+| Donnée | Valeur |
+| --- | --- |
+| `entity_id` | L'entité fusionnée (`fan.<nom>`, `light.<nom>_light`, ...) |
+| `role` | `fan`, `light`, `timer` ou `sound` |
+| `source_entity` | L'entité désormais en service |
+| `using_backup` | `true` quand le secours a pris le relais |
+
+## Diagnostics
+
+**Paramètres → Appareils et services → FanBridge → ⋮ → Télécharger les diagnostics** donne les réglages et, pour chaque rôle, les entités principale et de secours, celle en service et leurs états.
+
 ## Le fichier de la carte
 
 L'intégration sert la carte à l'adresse `/fan_bridge/fan-bridge-card.js?v=<version>-<empreinte>` et la charge dans tous les tableaux de bord. La valeur de `?v=` est la version de l'intégration suivie des 8 premiers caractères du SHA-256 du fichier : le navigateur récupère donc le nouveau fichier dès que l'un des deux change, et **il n'y a pas de cache à vider après une mise à jour**, seulement la page à recharger.
