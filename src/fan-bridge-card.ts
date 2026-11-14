@@ -25,8 +25,8 @@ import {
 class FanBridgeCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private _config!: FanBridgeCardConfig;
-  // The colour-temperature slider is tucked behind the light chip.
-  @state() private _tempOpen = false;
+  // The brightness and colour-temperature sliders are tucked behind the light chip.
+  @state() private _lightOpen = false;
 
   // ── Static HA card registration ─────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ class FanBridgeCard extends LitElement {
     let size = 3;
     if (this._config?.show_name !== false) size += 1;
     if (!this._fanState || this._fanSupportsSpeed) size += 1;
-    if (this._showColorTemp) size += 1;
+    if (this._showLightPanel) size += 1;
     return size;
   }
 
@@ -208,9 +208,22 @@ class FanBridgeCard extends LitElement {
     return this._lightState?.state === "on";
   }
 
+  private get _lightModes(): string[] {
+    return this._lightState?.attributes?.supported_color_modes ?? [];
+  }
+
   private get _lightSupportsColorTemp(): boolean {
-    const modes: string[] = this._lightState?.attributes?.supported_color_modes ?? [];
-    return modes.includes("color_temp");
+    return this._lightModes.includes("color_temp");
+  }
+
+  // Every colour mode but on/off dims.
+  private get _lightSupportsBrightness(): boolean {
+    return this._lightModes.some((mode) => mode !== "onoff");
+  }
+
+  private get _brightnessPct(): number {
+    const raw = Number(this._lightState?.attributes?.brightness ?? 0);
+    return Math.max(1, Math.round((raw / 255) * 100));
   }
 
   private get _minKelvin(): number {
@@ -225,8 +238,9 @@ class FanBridgeCard extends LitElement {
     );
   }
 
-  private get _showColorTemp(): boolean {
-    return !!this._lightState && this._isLightOn && this._lightSupportsColorTemp;
+  // The panel behind the light chip: brightness and colour temperature.
+  private get _showLightPanel(): boolean {
+    return this._isLightOn && (this._lightSupportsBrightness || this._lightSupportsColorTemp);
   }
 
   private get _isSoundOn(): boolean {
@@ -392,6 +406,14 @@ class FanBridgeCard extends LitElement {
   private _toggleLight(): void {
     if (!this._entities.light) return;
     this._call("light", "toggle", { entity_id: this._entities.light });
+  }
+
+  private _setBrightness(ev: Event): void {
+    if (!this._entities.light) return;
+    this._call("light", "turn_on", {
+      entity_id: this._entities.light,
+      brightness_pct: Number((ev.target as HTMLInputElement).value),
+    });
   }
 
   private _setColorTemp(ev: Event): void {
@@ -679,17 +701,16 @@ class FanBridgeCard extends LitElement {
                 <ha-icon icon="${this._isLightOn ? "mdi:lightbulb-outline" : "mdi:lightbulb-off-outline"}"></ha-icon>
                 <span class="chip-label">${this._t("controls.light")}</span>
               </button>
-              ${this._showColorTemp
+              ${this._showLightPanel
                 ? html`
                   <button
-                    class="temp-toggle ${this._tempOpen ? "open" : ""}"
-                    @click=${() => (this._tempOpen = !this._tempOpen)}
-                    aria-label="${this._t("controls.color_temp")}"
-                    aria-expanded=${this._tempOpen}
-                    title="${this._t("controls.color_temp")}"
+                    class="light-toggle ${this._lightOpen ? "open" : ""}"
+                    @click=${() => (this._lightOpen = !this._lightOpen)}
+                    aria-label="${this._t("controls.light_settings")}"
+                    aria-expanded=${this._lightOpen}
+                    title="${this._t("controls.light_settings")}"
                   >
-                    <ha-icon icon="mdi:white-balance-sunny"></ha-icon>
-                    <span>K</span>
+                    <ha-icon icon="mdi:tune-vertical"></ha-icon>
                   </button>
                 `
                 : nothing}
@@ -736,6 +757,50 @@ class FanBridgeCard extends LitElement {
           `
           : nothing}
       </div>
+    `;
+  }
+
+  private _renderLightPanel(disabled: boolean) {
+    return html`
+      ${this._lightSupportsBrightness
+        ? html`
+          <div class="slider-row bright-row">
+            <ha-icon class="slider-icon" icon="mdi:brightness-6"></ha-icon>
+            <input
+              class="slider bright-slider"
+              type="range"
+              min="1"
+              max="100"
+              step="1"
+              .value=${live(String(this._brightnessPct))}
+              @change=${this._setBrightness}
+              ?disabled=${disabled}
+              aria-label="${this._t("controls.brightness")}"
+            />
+            <span class="slider-value">${this._brightnessPct}%</span>
+          </div>
+        `
+        : nothing}
+      ${this._lightSupportsColorTemp
+        ? html`
+          <div class="slider-row temp-row">
+            <span class="temp-label warm">${this._t("controls.temp_warm")}</span>
+            <input
+              class="slider temp-slider"
+              type="range"
+              min="${this._minKelvin}"
+              max="${this._maxKelvin}"
+              step="100"
+              .value=${live(String(this._currentKelvin))}
+              @change=${this._setColorTemp}
+              ?disabled=${disabled}
+              aria-label="${this._t("controls.color_temp")}"
+            />
+            <span class="temp-label cool">${this._t("controls.temp_cool")}</span>
+            <span class="slider-value">${this._currentKelvin}K</span>
+          </div>
+        `
+        : nothing}
     `;
   }
 
@@ -815,25 +880,8 @@ class FanBridgeCard extends LitElement {
 
           ${this._renderChips(isUnavailable, lightDisabled)}
 
-          ${this._showColorTemp && this._tempOpen
-            ? html`
-              <div class="temp-row">
-                <span class="temp-label warm">${this._t("controls.temp_warm")}</span>
-                <input
-                  class="temp-slider"
-                  type="range"
-                  min="${this._minKelvin}"
-                  max="${this._maxKelvin}"
-                  step="100"
-                  .value=${live(String(this._currentKelvin))}
-                  @change=${this._setColorTemp}
-                  ?disabled=${this._config.light_independent ? lightDisabled : isUnavailable}
-                  aria-label="${this._t("controls.color_temp")}"
-                />
-                <span class="temp-label cool">${this._t("controls.temp_cool")}</span>
-                <span class="temp-value">${this._currentKelvin}K</span>
-              </div>
-            `
+          ${this._showLightPanel && this._lightOpen
+            ? this._renderLightPanel(this._config.light_independent ? lightDisabled : isUnavailable)
             : nothing}
         </div>
       </ha-card>
@@ -854,7 +902,7 @@ class FanBridgeCard extends LitElement {
     }
 
     button:focus-visible,
-    .temp-slider:focus-visible {
+    .slider:focus-visible {
       outline: var(--wc-focus-ring);
       outline-offset: 2px;
     }
@@ -1363,9 +1411,9 @@ class FanBridgeCard extends LitElement {
     .chip.split.on .main ha-icon {
       color: var(--wc-a);
     }
-    .temp-toggle {
+    .light-toggle {
       flex: none;
-      width: 56px;
+      width: 52px;
       height: 100%;
       display: flex;
       align-items: center;
@@ -1379,18 +1427,18 @@ class FanBridgeCard extends LitElement {
       cursor: pointer;
       padding: 0;
     }
-    .temp-toggle ha-icon {
-      --mdc-icon-size: 18px;
+    .light-toggle ha-icon {
+      --mdc-icon-size: 20px;
       display: flex;
     }
-    .temp-toggle:hover,
-    .temp-toggle.open {
+    .light-toggle:hover,
+    .light-toggle.open {
       color: var(--wc-a);
       background: color-mix(in srgb, var(--wc-a) 10%, transparent);
     }
 
-    /* Colour temperature (collapsed behind the light chip) */
-    .temp-row {
+    /* Brightness and colour temperature (collapsed behind the light chip) */
+    .slider-row {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -1405,7 +1453,13 @@ class FanBridgeCard extends LitElement {
       flex-shrink: 0;
       color: var(--wc-dim);
     }
-    .temp-value {
+    .slider-icon {
+      --mdc-icon-size: 18px;
+      display: flex;
+      flex: none;
+      color: var(--wc-dim);
+    }
+    .slider-value {
       font-size: 12px;
       font-weight: 700;
       color: var(--wc-text);
@@ -1413,19 +1467,24 @@ class FanBridgeCard extends LitElement {
       text-align: right;
       flex-shrink: 0;
     }
-    .temp-slider {
+    .slider {
       flex: 1;
       -webkit-appearance: none;
       appearance: none;
       height: 8px;
       border-radius: 4px;
-      /* Depicts the light's colour temperature itself (warm to cool white),
-         so it is intentionally theme-independent. */
-      background: linear-gradient(to right, #ffb46e, #fff6e8 50%, #cfe4ff);
       outline: none;
       cursor: pointer;
     }
-    .temp-slider::-webkit-slider-thumb {
+    .bright-slider {
+      background: linear-gradient(to right, var(--wc-line), var(--wc-accent));
+    }
+    .temp-slider {
+      /* Depicts the light's colour temperature itself (warm to cool white),
+         so it is intentionally theme-independent. */
+      background: linear-gradient(to right, #ffb46e, #fff6e8 50%, #cfe4ff);
+    }
+    .slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
       width: 20px;
@@ -1435,7 +1494,7 @@ class FanBridgeCard extends LitElement {
       border: 4px solid var(--wc-accent);
       cursor: pointer;
     }
-    .temp-slider::-moz-range-thumb {
+    .slider::-moz-range-thumb {
       width: 20px;
       height: 20px;
       border-radius: 50%;
@@ -1443,7 +1502,7 @@ class FanBridgeCard extends LitElement {
       border: 4px solid var(--wc-accent);
       cursor: pointer;
     }
-    .temp-slider:disabled {
+    .slider:disabled {
       opacity: 0.5;
       cursor: default;
     }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { $, entity, makeHass, mountCard, openTempPanel } from "./helpers";
+import { $, entity, makeHass, mountCard, openLightPanel } from "./helpers";
 
 const FAN = "fan.f";
 const fan = (attributes: Record<string, unknown> = {}) =>
@@ -103,7 +103,7 @@ describe("service calls (audit B6, B7)", () => {
     ]);
     hass.callService.mockRejectedValue(new Error("offline"));
     const el = await mountCard({ fan_entity: FAN }, hass);
-    await openTempPanel(el);
+    await openLightPanel(el);
     const slider = $(el, ".temp-slider") as HTMLInputElement;
     expect(slider.value).toBe("3000");
     slider.value = "5000";
@@ -142,7 +142,7 @@ describe("dial", () => {
     ]);
     const el = await mountCard({ fan_entity: FAN }, hass);
     expect($(el, ".temp-slider")).toBeNull();
-    await openTempPanel(el);
+    await openLightPanel(el);
     expect($(el, ".temp-slider")).not.toBeNull();
   });
 
