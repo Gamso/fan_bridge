@@ -1,6 +1,6 @@
 {
   "name": "fan-bridge-card",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Custom Home Assistant card for smart ceiling fans (CREATE Windcalm, Klassfan, …)",
   "type": "module",
