@@ -8,7 +8,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import slugify
 
-from .const import DOMAIN
+from .const import DOMAIN, EVENT_SOURCE_CHANGED
 from .group import FanGroup
 
 
@@ -49,13 +49,37 @@ class FanBridgeEntity(Entity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
+        self._using_backup = self._group.using_backup(self._role)
         self.async_on_remove(
             async_track_state_change_event(self.hass, self._group.pair(self._role).ids, self._source_changed)
         )
 
     @callback
     def _source_changed(self, event: Event[EventStateChangedData]) -> None:
+        self._announce_handover()
         self.async_write_ha_state()
+
+    @callback
+    def _announce_handover(self) -> None:
+        """Fire EVENT_SOURCE_CHANGED when the backup takes over or hands back.
+
+        Nothing is fired while neither entity is usable: no one is in charge.
+        """
+        if not self._group.available(self._role):
+            return
+        using_backup = self._group.using_backup(self._role)
+        if using_backup == self._using_backup:
+            return
+        self._using_backup = using_backup
+        self.hass.bus.async_fire(
+            EVENT_SOURCE_CHANGED,
+            {
+                "entity_id": self.entity_id,
+                "role": self._role,
+                "source_entity": self._group.active_id(self._role),
+                "using_backup": using_backup,
+            },
+        )
 
     @property
     def _source(self):

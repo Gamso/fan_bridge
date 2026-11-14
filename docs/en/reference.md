@@ -41,6 +41,21 @@ The options store entity ids. When you rename one of the main, backup, presence 
 
 Remote buttons are not entities: they are stored in the options and listed in **Configure → Remotes**, see [Remotes](remotes.md). Each pressed button calls the services of the merged entities (`fan.toggle`, `fan.increase_speed`, `fan.set_percentage`, `fan.set_direction`, `fan.oscillate`, `fan.set_preset_mode`, `light.toggle`, `switch.toggle`, ...).
 
+## Logbook event
+
+`fan_bridge_source_changed` is fired when the backup entity of a role takes over, or hands back to the main one. It shows in the logbook ("switched to its backup …", "is back on its main entity …") and can trigger automations.
+
+| Data | Value |
+| --- | --- |
+| `entity_id` | The merged entity (`fan.<name>`, `light.<name>_light`, ...) |
+| `role` | `fan`, `light`, `timer` or `sound` |
+| `source_entity` | The entity now in charge |
+| `using_backup` | `true` when the backup took over |
+
+## Diagnostics
+
+**Settings → Devices & services → FanBridge → ⋮ → Download diagnostics** gives the settings and, for each role, the main and backup entities, the one in charge and their states.
+
 ## The card's bundle
 
 The integration serves the card at `/fan_bridge/fan-bridge-card.js?v=<version>-<hash>` and loads it in every dashboard. The `?v=` value is the version of the integration and the first 8 characters of the file's SHA-256, so the browser fetches the new bundle as soon as either changes: **no cache to clear after an update**, only a page reload.
