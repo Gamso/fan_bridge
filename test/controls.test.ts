@@ -120,19 +120,46 @@ describe("dial", () => {
   const sixSpeed = () =>
     makeHass([entity(FAN, "on", { supported_features: 1 | 16 | 32, percentage: 50, percentage_step: 100 / 6 })]);
 
-  const tap = (el: HTMLElement, xFrac: number, yFrac: number) => {
+  const pointer = (el: HTMLElement, type: string, xFrac: number, yFrac: number) => {
     const hit = $(el, ".hit") as unknown as SVGGraphicsElement;
     const svg = hit.ownerSVGElement as SVGSVGElement;
     svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300, height: 276, right: 300, bottom: 276, x: 0, y: 0, toJSON: () => ({}) });
-    hit.dispatchEvent(new MouseEvent("click", { clientX: xFrac * 300, clientY: yFrac * 276, bubbles: true }));
+    hit.dispatchEvent(new MouseEvent(type, { clientX: xFrac * 300, clientY: yFrac * 276, bubbles: true }));
   };
+  // Right end of the arc (about 45° below the horizontal) is the top speed,
+  // left end the first one.
+  const RIGHT_END = [0.5 + 0.28, 0.54 + 0.28] as const;
+  const LEFT_END = [0.5 - 0.28, 0.54 + 0.28] as const;
 
   it("sets the speed from the tapped angle", async () => {
     const hass = sixSpeed();
     const el = await mountCard({ fan_entity: FAN }, hass);
-    // Right end of the arc (about 45° below the horizontal) is the top speed.
-    tap(el, 0.5 + 0.28, 0.54 + 0.28);
+    pointer(el, "pointerdown", ...RIGHT_END);
+    pointer(el, "pointerup", ...RIGHT_END);
+    expect(hass.callService).toHaveBeenCalledTimes(1);
     expect(hass.callService).toHaveBeenCalledWith("fan", "set_percentage", { entity_id: FAN, percentage: 100 });
+  });
+
+  it("follows a drag and sends the speed once, on release", async () => {
+    const hass = sixSpeed();
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    pointer(el, "pointerdown", ...LEFT_END);
+    pointer(el, "pointermove", ...RIGHT_END);
+    await (el as unknown as { updateComplete: Promise<boolean> }).updateComplete;
+    expect($(el, ".speed-seg.active")?.textContent?.trim()).toBe("6");
+    expect(hass.callService).not.toHaveBeenCalled();
+    pointer(el, "pointerup", ...RIGHT_END);
+    expect(hass.callService).toHaveBeenCalledTimes(1);
+    expect(hass.callService).toHaveBeenCalledWith("fan", "set_percentage", { entity_id: FAN, percentage: 100 });
+  });
+
+  it("drops a cancelled drag", async () => {
+    const hass = sixSpeed();
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    pointer(el, "pointerdown", ...RIGHT_END);
+    pointer(el, "pointercancel", ...RIGHT_END);
+    pointer(el, "pointerup", ...RIGHT_END);
+    expect(hass.callService).not.toHaveBeenCalled();
   });
 
   it("keeps the colour-temperature slider collapsed until asked for", async () => {

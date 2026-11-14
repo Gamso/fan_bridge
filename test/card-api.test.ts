@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { $, entity, makeHass, mountCard } from "./helpers";
+import { $, entity, makeHass, mountCard, openTempPanel } from "./helpers";
 
 type CardClass = {
   getStubConfig(hass?: unknown, entities?: string[]): { fan_entity: string };
@@ -67,16 +67,21 @@ describe("FanBridge fan only", () => {
 
 describe("sizing (audit A6)", () => {
   it("grows with the rendered rows", async () => {
+    // Header (2) and the lone power button (2).
     const plain = await mountCard({ fan_entity: FAN, show_name: false }, makeHass([fan(16 | 32)]));
-    expect(plain.getCardSize()).toBe(3);
+    expect(plain.getCardSize()).toBe(4);
+    // Header (2), dial (6), season (2), one row of chips (1).
     const full = await mountCard(
       { fan_entity: FAN },
       makeHass([
-        fan(),
+        fan(1 | 4 | 16 | 32),
         entity("light.f", "on", { supported_color_modes: ["color_temp"] }),
       ]),
     );
-    expect(full.getCardSize()).toBe(6);
+    expect(full.getCardSize()).toBe(11);
+    // The open colour-temperature slider adds a row.
+    await openTempPanel(full);
+    expect(full.getCardSize()).toBe(12);
   });
 
   it("exposes sections-view grid options", async () => {

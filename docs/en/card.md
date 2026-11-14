@@ -23,7 +23,7 @@ The visual editor only lists the fans of the FanBridge integration, and only ask
 
 ## What it shows
 
-- **Speed dial**: 270° with one numbered step per speed. Tap the arc or a number to pick a speed. The number of speeds comes from the fan's `percentage_step` (6 when it is not reported); 6-speed fans get named speeds (Gentle, Soft, Moderate, Normal, Strong, Turbo), others "Speed N". A fan with more than 10 steps (continuous speed) gets 6.
+- **Speed dial**: 270° with one numbered step per speed. Tap the arc or a number to pick a speed, or drag along the arc: the dial follows and the speed is sent once, when you let go. The number of speeds comes from the fan's `percentage_step` (6 when it is not reported); 6-speed fans get named speeds (Gentle, Soft, Moderate, Normal, Strong, Turbo), others "Speed N". A fan with more than 10 steps (continuous speed) gets 6.
 - **Power button** in the opening of the dial, shown only if the fan can be turned on and off. An on/off fan without speeds gets no dial.
 - **Animated fan icon** that spins faster with speed, and still when the browser asks for reduced motion.
 - **Blade direction** (summer / winter) on its own row, independent of power, with a different background effect for each (air streaks / rising particles). It is shown for fans that support `direction`. See [Summer / winter](#summer--winter).

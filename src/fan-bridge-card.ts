@@ -27,6 +27,8 @@ class FanBridgeCard extends LitElement {
   @state() private _config!: FanBridgeCardConfig;
   // The colour-temperature slider is tucked behind the light chip.
   @state() private _tempOpen = false;
+  // Speed under the finger while the dial is dragged, undefined otherwise.
+  @state() private _dragSpeed?: number;
 
   // ── Static HA card registration ─────────────────────────────────────────────
 
@@ -48,14 +50,24 @@ class FanBridgeCard extends LitElement {
     return document.createElement("fan-bridge-card-editor");
   }
 
-  // Masonry height in ~50 px units: status row (2) + control bar (1), plus the
-  // title, the speed bar and the colour-temperature row when shown.
+  // Masonry height in ~50 px units: the header (2), the dial (6, about 300 px)
+  // or the lone power button (2), the season row (2), one per row of chips and
+  // one for the open colour-temperature slider.
   public getCardSize(): number {
-    let size = 3;
-    if (this._config?.show_name !== false) size += 1;
-    if (!this._fanState || this._fanSupportsSpeed) size += 1;
-    if (this._showColorTemp) size += 1;
+    const fan = this._fanState;
+    let size = 2;
+    if (isFanUnavailable(fan)) size += 1;
+    size += !fan || this._fanSupportsSpeed ? 6 : 2;
+    if (this._fanSupportsDirection) size += 2;
+    size += Math.ceil(this._chipCount / 2);
+    if (this._showColorTemp && this._tempOpen) size += 1;
     return size;
+  }
+
+  private get _chipCount(): number {
+    return [this._fanSupportsPreset, this._fanSupportsOscillate, this._lightState, this._timerState, this._soundState].filter(
+      Boolean,
+    ).length;
   }
 
   // Sections view: full width by default, never narrower than half, height
@@ -444,20 +456,49 @@ class FanBridgeCard extends LitElement {
     return `M ${x1} ${y1} A ${r} ${r} 0 1 1 ${x2} ${y2}`;
   }
 
-  // Tapping the arc picks the speed nearest to the tapped angle.
-  private _onDialClick(ev: MouseEvent): void {
-    const svg = (ev.currentTarget as SVGGraphicsElement).ownerSVGElement;
-    if (!svg || isFanUnavailable(this._fanState)) return;
+  // Speed nearest to the angle of a pointer on the arc.
+  private _speedAt(ev: MouseEvent): number | undefined {
+    const svg = (ev.currentTarget as SVGGraphicsElement | null)?.ownerSVGElement;
+    if (!svg) return undefined;
     const { cx, cy, start, sweep, w, h } = FanBridgeCard._DIAL;
     const box = svg.getBoundingClientRect();
-    if (!box.width || !box.height) return;
+    if (!box.width || !box.height) return undefined;
     const x = ((ev.clientX - box.left) / box.width) * w - cx;
     const y = ((ev.clientY - box.top) / box.height) * h - cy;
     let angle = ((Math.atan2(y, x) * 180) / Math.PI - start + 360) % 360;
     // The bottom gap belongs to the nearest end of the arc.
     if (angle > sweep) angle = angle > sweep + (360 - sweep) / 2 ? 0 : sweep;
     const count = this._speedCount;
-    this._setSpeed(Math.min(count, Math.max(1, Math.round((angle / sweep) * count))));
+    return Math.min(count, Math.max(1, Math.round((angle / sweep) * count)));
+  }
+
+  // Tap the arc, or drag along it: the dial follows the finger and the speed
+  // is sent once, when it is released.
+  private _onDialDown(ev: PointerEvent): void {
+    if (isFanUnavailable(this._fanState)) return;
+    const target = ev.currentTarget as Element;
+    try {
+      target.setPointerCapture?.(ev.pointerId);
+    } catch {
+      // Synthetic events have no active pointer to capture.
+    }
+    this._dragSpeed = this._speedAt(ev);
+  }
+
+  private _onDialMove(ev: PointerEvent): void {
+    if (this._dragSpeed === undefined) return;
+    this._dragSpeed = this._speedAt(ev) ?? this._dragSpeed;
+  }
+
+  private _onDialUp(ev: PointerEvent): void {
+    if (this._dragSpeed === undefined) return;
+    const speed = this._speedAt(ev) ?? this._dragSpeed;
+    this._dragSpeed = undefined;
+    this._setSpeed(speed);
+  }
+
+  private _onDialCancel(): void {
+    this._dragSpeed = undefined;
   }
 
   private _renderSpeedIcon(speed: number) {
@@ -555,7 +596,14 @@ class FanBridgeCard extends LitElement {
             : nothing}
           ${ticks}
           <circle class="thumb ${speed === 0 ? "idle" : ""}" cx="${tx}" cy="${ty}" r="13" />
-          <path class="hit" d="${this._dialPath}" @click=${this._onDialClick} />
+          <path
+            class="hit"
+            d="${this._dialPath}"
+            @pointerdown=${this._onDialDown}
+            @pointermove=${this._onDialMove}
+            @pointerup=${this._onDialUp}
+            @pointercancel=${this._onDialCancel}
+          />
         </svg>
         <div class="center">
           <div class="cap">${this._t("speed.label")}</div>
@@ -808,7 +856,7 @@ class FanBridgeCard extends LitElement {
             : nothing}
 
           ${this._fanSupportsSpeed
-            ? this._renderDial(speed, isUnavailable)
+            ? this._renderDial(this._dragSpeed ?? speed, isUnavailable)
             : html`<div class="onoff">${this._renderPower(isUnavailable)}</div>`}
 
           ${this._fanSupportsDirection ? this._renderSeason() : nothing}
@@ -1084,6 +1132,8 @@ class FanBridgeCard extends LitElement {
       stroke-width: 44;
       cursor: pointer;
       pointer-events: stroke;
+      /* Dragging along the arc must not scroll the page. */
+      touch-action: none;
     }
     .tick {
       stroke: var(--wc-line);
@@ -1144,8 +1194,8 @@ class FanBridgeCard extends LitElement {
     .speed-seg {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       border: 0;
       border-radius: 50%;
