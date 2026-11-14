@@ -114,9 +114,21 @@ export function fanSupportsDirection(fanState: HassEntity | undefined): boolean 
   return fanSupports(fanState, FanFeature.DIRECTION);
 }
 
-/** Whether an entity is a fan created by the FanBridge integration. */
-export function isBridgeFan(fanState: HassEntity | undefined): boolean {
-  return typeof fanState?.attributes?.using_backup === "boolean";
+export const BRIDGE_PLATFORM = "fan_bridge";
+
+/**
+ * Whether an entity is a fan created by the FanBridge integration.
+ *
+ * The entity registry says so even while the fan is unavailable: Home
+ * Assistant drops the extra attributes (using_backup among them) of an
+ * unavailable entity, so they are only a fallback for an instance whose
+ * registry the frontend does not expose.
+ */
+export function isBridgeFan(hass: HomeAssistant | undefined, entityId: string | undefined): boolean {
+  if (!entityId) return false;
+  const entry = hass?.entities?.[entityId];
+  if (entry) return entry.platform === BRIDGE_PLATFORM;
+  return typeof hass?.states?.[entityId]?.attributes?.using_backup === "boolean";
 }
 
 /**
@@ -133,7 +145,7 @@ export function resolveEntities(
   const device = registry?.[config.fan_entity]?.device_id;
   if (!registry || !device) return resolved;
   for (const entry of Object.values(registry)) {
-    if (entry.device_id !== device || entry.platform !== "fan_bridge") continue;
+    if (entry.device_id !== device || entry.platform !== BRIDGE_PLATFORM) continue;
     const role = entry.translation_key as EntityRole | undefined;
     if (role && ENTITY_ROLES.includes(role) && !resolved[role]) resolved[role] = entry.entity_id;
   }

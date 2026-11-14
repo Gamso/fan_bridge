@@ -29,7 +29,7 @@ class FanBridgeCardEditor extends LitElement {
   }
 
   private get _managed(): boolean {
-    return isBridgeFan(this.hass?.states?.[this._config?.fan_entity]);
+    return isBridgeFan(this.hass, this._config?.fan_entity);
   }
 
   // The visual editor only picks the fan and a few display options: the backup,

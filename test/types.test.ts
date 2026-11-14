@@ -110,13 +110,21 @@ describe("speed mapping per count", () => {
 });
 
 describe("isBridgeFan", () => {
-  it("is true for a fan that reports using_backup", () => {
-    expect(isBridgeFan(entity("fan.f", "on", { using_backup: false }))).toBe(true);
-    expect(isBridgeFan(entity("fan.f", "on", { using_backup: true }))).toBe(true);
+  it("trusts the entity registry, even for an unavailable fan without attributes", () => {
+    const hass = makeHass([entity("fan.f", "unavailable", { using_backup: undefined })]);
+    expect(isBridgeFan(hass, "fan.f")).toBe(true);
+    hass.entities!["fan.f"].platform = "tuya";
+    expect(isBridgeFan(hass, "fan.f")).toBe(false);
   });
-  it("is false for any other fan, or a missing one", () => {
-    expect(isBridgeFan(entity("fan.f", "on", { using_backup: undefined }))).toBe(false);
-    expect(isBridgeFan(undefined)).toBe(false);
+  it("falls back to using_backup without a registry entry", () => {
+    const hass = makeHass([entity("fan.a", "on", { using_backup: true }), entity("fan.b", "on", { using_backup: undefined })]);
+    delete hass.entities;
+    expect(isBridgeFan(hass, "fan.a")).toBe(true);
+    expect(isBridgeFan(hass, "fan.b")).toBe(false);
+  });
+  it("is false for a missing fan", () => {
+    expect(isBridgeFan(makeHass([]), "fan.gone")).toBe(false);
+    expect(isBridgeFan(undefined, undefined)).toBe(false);
   });
 });
 
