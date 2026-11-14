@@ -34,7 +34,7 @@ L'éditeur visuel ne propose que les ventilateurs de l'intégration FanBridge, e
 
 - Les commandes qui n'ont pas de sens ventilateur éteint (lumière, bip, préréglage, minuterie, sens) sont désactivées. Un ventilateur à l'état `unknown` compte comme éteint et indisponible.
 - **Préréglages de minuterie**, toujours, y compris pour les ventilateurs dont la minuterie est un `number` en saisie libre.
-- **Température de couleur de la lumière**, derrière un bouton à côté de la pastille lumière.
+- **Luminosité et température de couleur de la lumière**, derrière un bouton à côté de la pastille lumière ; chaque curseur apparaît si la lumière le gère.
 
   ![Le réglage de température de couleur de la lumière](../images/card/fr/light.png)
 

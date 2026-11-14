@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { $, entity, makeHass, mountCard, openTempPanel } from "./helpers";
+import { $, entity, makeHass, mountCard, openLightPanel } from "./helpers";
 
 type CardClass = {
   getStubConfig(hass?: unknown, entities?: string[]): { fan_entity: string };
@@ -86,9 +86,9 @@ describe("sizing (audit A6)", () => {
       ]),
     );
     expect(full.getCardSize()).toBe(11);
-    // The open colour-temperature slider adds a row.
-    await openTempPanel(full);
-    expect(full.getCardSize()).toBe(12);
+    // The open light panel adds its brightness and colour-temperature sliders.
+    await openLightPanel(full);
+    expect(full.getCardSize()).toBe(13);
   });
 
   it("exposes sections-view grid options", async () => {
