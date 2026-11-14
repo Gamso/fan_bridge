@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- The card no longer calls an unavailable FanBridge fan "not a FanBridge fan": it recognises the fan from the entity registry, since Home Assistant drops the `using_backup` attribute of an unavailable entity.
+- The merged light only offers the colour modes it relays (colour temperature, or brightness), instead of a colour picker that did nothing.
+- A FanBridge entity can no longer be picked as a source, which made the service calls loop.
+- CI runs on pushes to `main`.
+
+### Added
+- Renamed source entities are followed: the entry is rewritten with the new entity id.
+- Diagnostics, and a logbook entry (event `fan_bridge_source_changed`) when the backup of a role takes over or hands back.
+- Card: a brightness slider behind the light chip, and the speed dial can be dragged.
+- Release workflow: pushing a `v*` tag publishes a GitHub release with the CHANGELOG section of that version.
+
+### Changed
+- Card: the editor and the card picker only offer FanBridge fans; larger speed buttons; accent text readable on light themes; `getCardSize` matches the rendered height; the timer's "off" option is translated.
+- The card is built straight into `custom_components/fan_bridge/www/`: the duplicate `dist/` bundle is gone.
+
 ## 1.0.0
 
 First release of **FanBridge**: a Home Assistant integration for smart ceiling fans, with a dashboard card bundled.
