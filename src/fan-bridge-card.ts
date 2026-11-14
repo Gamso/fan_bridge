@@ -7,7 +7,6 @@ import { localize } from "./localize/localize";
 import {
   FanBridgeCardConfig,
   ResolvedEntities,
-  TIMER_OPTIONS_MIN,
   DEFAULT_SPEED_COUNT,
   percentageToSpeed,
   speedCount,
@@ -20,25 +19,29 @@ import {
   FanFeature,
   isFanOn,
   isFanUnavailable,
+  UNAVAILABLE_STATES,
 } from "./types";
 
 class FanBridgeCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private _config!: FanBridgeCardConfig;
-  // The colour-temperature slider is tucked behind the light chip.
-  @state() private _tempOpen = false;
+  // The brightness and colour-temperature sliders are tucked behind the light chip.
+  @state() private _lightOpen = false;
+  // Speed under the finger while the dial is dragged, undefined otherwise.
+  @state() private _dragSpeed?: number;
 
   // ── Static HA card registration ─────────────────────────────────────────────
 
-  // Called by the card picker with the instance's entities: preview the first
-  // real fan rather than a hard-coded id that only exists in the devcontainer.
+  // Called by the card picker with the instance's entities: preview a
+  // FanBridge fan when there is one, the card only works with those.
   public static getStubConfig(
     hass?: HomeAssistant,
     entities: string[] = [],
   ): FanBridgeCardConfig {
+    const fans = [...entities, ...Object.keys(hass?.states ?? {})].filter((id) => id.startsWith("fan."));
     const fan =
-      entities.find((id) => id.startsWith("fan.")) ??
-      Object.keys(hass?.states ?? {}).find((id) => id.startsWith("fan.")) ??
+      fans.find((id) => isBridgeFan(hass, id)) ??
+      fans[0] ??
       "fan.ceiling_fan_with_light";
     return { fan_entity: fan, show_name: true };
   }
@@ -47,14 +50,26 @@ class FanBridgeCard extends LitElement {
     return document.createElement("fan-bridge-card-editor");
   }
 
-  // Masonry height in ~50 px units: status row (2) + control bar (1), plus the
-  // title, the speed bar and the colour-temperature row when shown.
+  // Masonry height in ~50 px units: the header (2), the dial (6, about 300 px)
+  // or the lone power button (2), the season row (2), one per row of chips and
+  // one per slider of the open light panel.
   public getCardSize(): number {
-    let size = 3;
-    if (this._config?.show_name !== false) size += 1;
-    if (!this._fanState || this._fanSupportsSpeed) size += 1;
-    if (this._showColorTemp) size += 1;
+    const fan = this._fanState;
+    let size = 2;
+    if (isFanUnavailable(fan)) size += 1;
+    size += !fan || this._fanSupportsSpeed ? 6 : 2;
+    if (this._fanSupportsDirection) size += 2;
+    size += Math.ceil(this._chipCount / 2);
+    if (this._showLightPanel && this._lightOpen) {
+      size += (this._lightSupportsBrightness ? 1 : 0) + (this._lightSupportsColorTemp ? 1 : 0);
+    }
     return size;
+  }
+
+  private get _chipCount(): number {
+    return [this._fanSupportsPreset, this._fanSupportsOscillate, this._lightState, this._timerState, this._soundState].filter(
+      Boolean,
+    ).length;
   }
 
   // Sections view: full width by default, never narrower than half, height
@@ -207,9 +222,22 @@ class FanBridgeCard extends LitElement {
     return this._lightState?.state === "on";
   }
 
+  private get _lightModes(): string[] {
+    return this._lightState?.attributes?.supported_color_modes ?? [];
+  }
+
   private get _lightSupportsColorTemp(): boolean {
-    const modes: string[] = this._lightState?.attributes?.supported_color_modes ?? [];
-    return modes.includes("color_temp");
+    return this._lightModes.includes("color_temp");
+  }
+
+  // Every colour mode but on/off dims.
+  private get _lightSupportsBrightness(): boolean {
+    return this._lightModes.some((mode) => mode !== "onoff");
+  }
+
+  private get _brightnessPct(): number {
+    const raw = Number(this._lightState?.attributes?.brightness ?? 0);
+    return Math.max(1, Math.round((raw / 255) * 100));
   }
 
   private get _minKelvin(): number {
@@ -224,8 +252,9 @@ class FanBridgeCard extends LitElement {
     );
   }
 
-  private get _showColorTemp(): boolean {
-    return !!this._lightState && this._isLightOn && this._lightSupportsColorTemp;
+  // The panel behind the light chip: brightness and colour temperature.
+  private get _showLightPanel(): boolean {
+    return this._isLightOn && (this._lightSupportsBrightness || this._lightSupportsColorTemp);
   }
 
   private get _isSoundOn(): boolean {
@@ -258,46 +287,28 @@ class FanBridgeCard extends LitElement {
     return p ? p.charAt(0).toUpperCase() + p.slice(1) : p;
   }
 
-  // "select" domain covers fans (e.g. Klassfan) whose timer is a predefined
-  // list of options rather than a free-form "number" entity.
-  private get _timerDomain(): "number" | "select" {
-    return this._entities.timer?.startsWith("select.") ? "select" : "number";
-  }
-
-  // Normalize so the value matches an option string exactly. A "number" entity
-  // may report "30.0" while the options are "30" — compare numerically there;
-  // a "select" entity's state is already one of its literal option strings.
+  // The timer of a FanBridge fan is always a select: the integration offers a
+  // number timer as presets ("off", "15 min", "2 h"…) and keeps the options of
+  // a select timer as they are.
   private get _timerValue(): string {
     const raw = this._timerState?.state;
-    if (raw === undefined || raw === null || raw === "") return "";
-    if (this._timerDomain === "select") return String(raw);
-    const n = Number(raw);
-    return Number.isNaN(n) ? String(raw) : String(n);
+    return raw === undefined || raw === null || UNAVAILABLE_STATES.has(raw) ? "" : String(raw);
   }
 
   private get _timerOptions(): string[] {
-    if (this._timerDomain === "select") {
-      return this._timerState?.attributes?.options ?? [];
-    }
-    return TIMER_OPTIONS_MIN.map(String);
+    return this._timerState?.attributes?.options ?? [];
   }
 
-  // Options rendered in the timer select: the entity's current value is added
-  // when it is not one of the presets (e.g. a number timer set to 45 min
-  // elsewhere), so the select never falls back to showing "None".
+  // The current value is added when it is not an option, so the select never
+  // falls back to showing another one.
   private get _timerChoices(): string[] {
     const options = this._timerOptions;
     const value = this._timerValue;
-    if (value === "" || options.includes(value)) return options;
-    if (this._timerDomain === "select") return [...options, value];
-    return [...options, value].sort((a, b) => Number(a) - Number(b));
+    return value === "" || options.includes(value) ? options : [...options, value];
   }
 
   private _formatTimerOption(raw: string): string {
-    const n = Number(raw);
-    if (raw.trim() === "" || Number.isNaN(n)) return raw;
-    if (n === 0) return this._t("controls.timer_none");
-    return n < 60 ? `${n} min` : `${n / 60} h`;
+    return raw.toLowerCase() === "off" ? this._t("controls.timer_none") : raw;
   }
 
   // The first option is the "no timer" sentinel (0 minutes, or a fan's own
@@ -393,6 +404,14 @@ class FanBridgeCard extends LitElement {
     this._call("light", "toggle", { entity_id: this._entities.light });
   }
 
+  private _setBrightness(ev: Event): void {
+    if (!this._entities.light) return;
+    this._call("light", "turn_on", {
+      entity_id: this._entities.light,
+      brightness_pct: Number((ev.target as HTMLInputElement).value),
+    });
+  }
+
   private _setColorTemp(ev: Event): void {
     if (!this._entities.light) return;
     const kelvin = Number((ev.target as HTMLInputElement).value);
@@ -404,18 +423,10 @@ class FanBridgeCard extends LitElement {
 
   private _setTimer(ev: Event): void {
     if (!this._entities.timer) return;
-    const value = (ev.target as HTMLSelectElement).value;
-    if (this._timerDomain === "select") {
-      this._call("select", "select_option", {
-        entity_id: this._entities.timer,
-        option: value,
-      });
-    } else {
-      this._call("number", "set_value", {
-        entity_id: this._entities.timer,
-        value: Number(value),
-      });
-    }
+    this._call("select", "select_option", {
+      entity_id: this._entities.timer,
+      option: (ev.target as HTMLSelectElement).value,
+    });
   }
 
   private _toggleSound(): void {
@@ -443,20 +454,49 @@ class FanBridgeCard extends LitElement {
     return `M ${x1} ${y1} A ${r} ${r} 0 1 1 ${x2} ${y2}`;
   }
 
-  // Tapping the arc picks the speed nearest to the tapped angle.
-  private _onDialClick(ev: MouseEvent): void {
-    const svg = (ev.currentTarget as SVGGraphicsElement).ownerSVGElement;
-    if (!svg || isFanUnavailable(this._fanState)) return;
+  // Speed nearest to the angle of a pointer on the arc.
+  private _speedAt(ev: MouseEvent): number | undefined {
+    const svg = (ev.currentTarget as SVGGraphicsElement | null)?.ownerSVGElement;
+    if (!svg) return undefined;
     const { cx, cy, start, sweep, w, h } = FanBridgeCard._DIAL;
     const box = svg.getBoundingClientRect();
-    if (!box.width || !box.height) return;
+    if (!box.width || !box.height) return undefined;
     const x = ((ev.clientX - box.left) / box.width) * w - cx;
     const y = ((ev.clientY - box.top) / box.height) * h - cy;
     let angle = ((Math.atan2(y, x) * 180) / Math.PI - start + 360) % 360;
     // The bottom gap belongs to the nearest end of the arc.
     if (angle > sweep) angle = angle > sweep + (360 - sweep) / 2 ? 0 : sweep;
     const count = this._speedCount;
-    this._setSpeed(Math.min(count, Math.max(1, Math.round((angle / sweep) * count))));
+    return Math.min(count, Math.max(1, Math.round((angle / sweep) * count)));
+  }
+
+  // Tap the arc, or drag along it: the dial follows the finger and the speed
+  // is sent once, when it is released.
+  private _onDialDown(ev: PointerEvent): void {
+    if (isFanUnavailable(this._fanState)) return;
+    const target = ev.currentTarget as Element;
+    try {
+      target.setPointerCapture?.(ev.pointerId);
+    } catch {
+      // Synthetic events have no active pointer to capture.
+    }
+    this._dragSpeed = this._speedAt(ev);
+  }
+
+  private _onDialMove(ev: PointerEvent): void {
+    if (this._dragSpeed === undefined) return;
+    this._dragSpeed = this._speedAt(ev) ?? this._dragSpeed;
+  }
+
+  private _onDialUp(ev: PointerEvent): void {
+    if (this._dragSpeed === undefined) return;
+    const speed = this._speedAt(ev) ?? this._dragSpeed;
+    this._dragSpeed = undefined;
+    this._setSpeed(speed);
+  }
+
+  private _onDialCancel(): void {
+    this._dragSpeed = undefined;
   }
 
   private _renderSpeedIcon(speed: number) {
@@ -554,7 +594,14 @@ class FanBridgeCard extends LitElement {
             : nothing}
           ${ticks}
           <circle class="thumb ${speed === 0 ? "idle" : ""}" cx="${tx}" cy="${ty}" r="13" />
-          <path class="hit" d="${this._dialPath}" @click=${this._onDialClick} />
+          <path
+            class="hit"
+            d="${this._dialPath}"
+            @pointerdown=${this._onDialDown}
+            @pointermove=${this._onDialMove}
+            @pointerup=${this._onDialUp}
+            @pointercancel=${this._onDialCancel}
+          />
         </svg>
         <div class="center">
           <div class="cap">${this._t("speed.label")}</div>
@@ -678,17 +725,16 @@ class FanBridgeCard extends LitElement {
                 <ha-icon icon="${this._isLightOn ? "mdi:lightbulb-outline" : "mdi:lightbulb-off-outline"}"></ha-icon>
                 <span class="chip-label">${this._t("controls.light")}</span>
               </button>
-              ${this._showColorTemp
+              ${this._showLightPanel
                 ? html`
                   <button
-                    class="temp-toggle ${this._tempOpen ? "open" : ""}"
-                    @click=${() => (this._tempOpen = !this._tempOpen)}
-                    aria-label="${this._t("controls.color_temp")}"
-                    aria-expanded=${this._tempOpen}
-                    title="${this._t("controls.color_temp")}"
+                    class="light-toggle ${this._lightOpen ? "open" : ""}"
+                    @click=${() => (this._lightOpen = !this._lightOpen)}
+                    aria-label="${this._t("controls.light_settings")}"
+                    aria-expanded=${this._lightOpen}
+                    title="${this._t("controls.light_settings")}"
                   >
-                    <ha-icon icon="mdi:white-balance-sunny"></ha-icon>
-                    <span>K</span>
+                    <ha-icon icon="mdi:tune-vertical"></ha-icon>
                   </button>
                 `
                 : nothing}
@@ -735,6 +781,50 @@ class FanBridgeCard extends LitElement {
           `
           : nothing}
       </div>
+    `;
+  }
+
+  private _renderLightPanel(disabled: boolean) {
+    return html`
+      ${this._lightSupportsBrightness
+        ? html`
+          <div class="slider-row bright-row">
+            <ha-icon class="slider-icon" icon="mdi:brightness-6"></ha-icon>
+            <input
+              class="slider bright-slider"
+              type="range"
+              min="1"
+              max="100"
+              step="1"
+              .value=${live(String(this._brightnessPct))}
+              @change=${this._setBrightness}
+              ?disabled=${disabled}
+              aria-label="${this._t("controls.brightness")}"
+            />
+            <span class="slider-value">${this._brightnessPct}%</span>
+          </div>
+        `
+        : nothing}
+      ${this._lightSupportsColorTemp
+        ? html`
+          <div class="slider-row temp-row">
+            <span class="temp-label warm">${this._t("controls.temp_warm")}</span>
+            <input
+              class="slider temp-slider"
+              type="range"
+              min="${this._minKelvin}"
+              max="${this._maxKelvin}"
+              step="100"
+              .value=${live(String(this._currentKelvin))}
+              @change=${this._setColorTemp}
+              ?disabled=${disabled}
+              aria-label="${this._t("controls.color_temp")}"
+            />
+            <span class="temp-label cool">${this._t("controls.temp_cool")}</span>
+            <span class="slider-value">${this._currentKelvin}K</span>
+          </div>
+        `
+        : nothing}
     `;
   }
 
@@ -807,32 +897,15 @@ class FanBridgeCard extends LitElement {
             : nothing}
 
           ${this._fanSupportsSpeed
-            ? this._renderDial(speed, isUnavailable)
+            ? this._renderDial(this._dragSpeed ?? speed, isUnavailable)
             : html`<div class="onoff">${this._renderPower(isUnavailable)}</div>`}
 
           ${this._fanSupportsDirection ? this._renderSeason() : nothing}
 
           ${this._renderChips(isUnavailable, lightDisabled)}
 
-          ${this._showColorTemp && this._tempOpen
-            ? html`
-              <div class="temp-row">
-                <span class="temp-label warm">${this._t("controls.temp_warm")}</span>
-                <input
-                  class="temp-slider"
-                  type="range"
-                  min="${this._minKelvin}"
-                  max="${this._maxKelvin}"
-                  step="100"
-                  .value=${live(String(this._currentKelvin))}
-                  @change=${this._setColorTemp}
-                  ?disabled=${this._config.light_independent ? lightDisabled : isUnavailable}
-                  aria-label="${this._t("controls.color_temp")}"
-                />
-                <span class="temp-label cool">${this._t("controls.temp_cool")}</span>
-                <span class="temp-value">${this._currentKelvin}K</span>
-              </div>
-            `
+          ${this._showLightPanel && this._lightOpen
+            ? this._renderLightPanel(this._config.light_independent ? lightDisabled : isUnavailable)
             : nothing}
         </div>
       </ha-card>
@@ -853,7 +926,7 @@ class FanBridgeCard extends LitElement {
     }
 
     button:focus-visible,
-    .temp-slider:focus-visible {
+    .slider:focus-visible {
       outline: var(--wc-focus-ring);
       outline-offset: 2px;
     }
@@ -873,6 +946,9 @@ class FanBridgeCard extends LitElement {
     .card-content {
       --wc-a: var(--wc-accent);
       --wc-a-soft: color-mix(in srgb, var(--wc-a) 55%, white);
+      /* Accent for text and thin strokes: pulled towards the theme's text
+         colour, so it stays readable on a light card as on a dark one. */
+      --wc-a-text: color-mix(in srgb, var(--wc-a) 70%, var(--primary-text-color));
       --wc-on-a: color-mix(in srgb, var(--wc-a) 18%, black);
       --wc-glow: color-mix(in srgb, var(--wc-a) 30%, transparent);
       position: relative;
@@ -998,7 +1074,7 @@ class FanBridgeCard extends LitElement {
       text-transform: uppercase;
       padding: 4px 9px;
       border-radius: 999px;
-      color: var(--wc-a-soft);
+      color: var(--wc-a-text);
       border: 1px solid color-mix(in srgb, var(--wc-a) 50%, transparent);
       background: color-mix(in srgb, var(--wc-a) 12%, transparent);
     }
@@ -1080,6 +1156,8 @@ class FanBridgeCard extends LitElement {
       stroke-width: 44;
       cursor: pointer;
       pointer-events: stroke;
+      /* Dragging along the arc must not scroll the page. */
+      touch-action: none;
     }
     .tick {
       stroke: var(--wc-line);
@@ -1126,7 +1204,7 @@ class FanBridgeCard extends LitElement {
       font-size: 24px;
       font-weight: 700;
       margin-left: 2px;
-      color: var(--wc-a-soft);
+      color: var(--wc-a-text);
     }
     .idle .center .big {
       color: var(--wc-dim);
@@ -1140,8 +1218,8 @@ class FanBridgeCard extends LitElement {
     .speed-seg {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       border: 0;
       border-radius: 50%;
@@ -1152,7 +1230,7 @@ class FanBridgeCard extends LitElement {
       transition: color 0.15s, background 0.15s;
     }
     .speed-seg.filled {
-      color: var(--wc-a-soft);
+      color: var(--wc-a-text);
     }
     .speed-seg.active {
       color: var(--wc-on-a);
@@ -1359,9 +1437,9 @@ class FanBridgeCard extends LitElement {
     .chip.split.on .main ha-icon {
       color: var(--wc-a);
     }
-    .temp-toggle {
+    .light-toggle {
       flex: none;
-      width: 56px;
+      width: 52px;
       height: 100%;
       display: flex;
       align-items: center;
@@ -1375,18 +1453,18 @@ class FanBridgeCard extends LitElement {
       cursor: pointer;
       padding: 0;
     }
-    .temp-toggle ha-icon {
-      --mdc-icon-size: 18px;
+    .light-toggle ha-icon {
+      --mdc-icon-size: 20px;
       display: flex;
     }
-    .temp-toggle:hover,
-    .temp-toggle.open {
+    .light-toggle:hover,
+    .light-toggle.open {
       color: var(--wc-a);
       background: color-mix(in srgb, var(--wc-a) 10%, transparent);
     }
 
-    /* Colour temperature (collapsed behind the light chip) */
-    .temp-row {
+    /* Brightness and colour temperature (collapsed behind the light chip) */
+    .slider-row {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -1401,7 +1479,13 @@ class FanBridgeCard extends LitElement {
       flex-shrink: 0;
       color: var(--wc-dim);
     }
-    .temp-value {
+    .slider-icon {
+      --mdc-icon-size: 18px;
+      display: flex;
+      flex: none;
+      color: var(--wc-dim);
+    }
+    .slider-value {
       font-size: 12px;
       font-weight: 700;
       color: var(--wc-text);
@@ -1409,19 +1493,24 @@ class FanBridgeCard extends LitElement {
       text-align: right;
       flex-shrink: 0;
     }
-    .temp-slider {
+    .slider {
       flex: 1;
       -webkit-appearance: none;
       appearance: none;
       height: 8px;
       border-radius: 4px;
-      /* Depicts the light's colour temperature itself (warm to cool white),
-         so it is intentionally theme-independent. */
-      background: linear-gradient(to right, #ffb46e, #fff6e8 50%, #cfe4ff);
       outline: none;
       cursor: pointer;
     }
-    .temp-slider::-webkit-slider-thumb {
+    .bright-slider {
+      background: linear-gradient(to right, var(--wc-line), var(--wc-accent));
+    }
+    .temp-slider {
+      /* Depicts the light's colour temperature itself (warm to cool white),
+         so it is intentionally theme-independent. */
+      background: linear-gradient(to right, #ffb46e, #fff6e8 50%, #cfe4ff);
+    }
+    .slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
       width: 20px;
@@ -1431,7 +1520,7 @@ class FanBridgeCard extends LitElement {
       border: 4px solid var(--wc-accent);
       cursor: pointer;
     }
-    .temp-slider::-moz-range-thumb {
+    .slider::-moz-range-thumb {
       width: 20px;
       height: 20px;
       border-radius: 50%;
@@ -1439,7 +1528,7 @@ class FanBridgeCard extends LitElement {
       border: 4px solid var(--wc-accent);
       cursor: pointer;
     }
-    .temp-slider:disabled {
+    .slider:disabled {
       opacity: 0.5;
       cursor: default;
     }
@@ -1460,7 +1549,13 @@ if (!customElements.get("fan-bridge-card")) {
 
 declare global {
   interface Window {
-    customCards?: { type: string; name: string; description: string; preview?: boolean }[];
+    customCards?: {
+      type: string;
+      name: string;
+      description: string;
+      preview?: boolean;
+      documentationURL?: string;
+    }[];
   }
 }
 
@@ -1471,4 +1566,5 @@ if (!window.customCards.some((card) => card.type === "fan-bridge-card"))
   name: "FanBridge Card",
   description: "Custom card for smart ceiling fans (CREATE Windcalm, Klassfan, …)",
   preview: true,
+  documentationURL: "https://github.com/Gamso/fan_bridge/blob/main/docs/en/card.md",
 });

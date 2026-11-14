@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { $, entity, makeHass, mountCard, openTempPanel } from "./helpers";
+import { $, entity, makeHass, mountCard, openLightPanel } from "./helpers";
 
 const FAN = "fan.f";
 const fan = (attributes: Record<string, unknown> = {}) =>
@@ -20,37 +20,46 @@ const selected = (select: HTMLSelectElement) =>
   Array.from(select.options).filter((o) => o.selected).map((o) => o.value);
 
 describe("selects (audit B5)", () => {
+  // The options of the integration's timer select for a number timer.
+  const PRESETS = ["off", "15 min", "30 min", "1 h", "2 h", "4 h", "8 h"];
+
   it("selects the timer value on the first render", async () => {
     const el = await mountCard(
       { fan_entity: FAN },
-      makeHass([fan(), entity("number.f_minuteur", "120.0")]),
+      makeHass([fan(), entity("select.f_timer", "2 h", { options: PRESETS })]),
     );
     const select = $(el, ".ctrl-select") as HTMLSelectElement;
-    expect(select.value).toBe("120");
-    expect(selected(select)).toEqual(["120"]);
-  });
-
-  it("shows a timer value outside the presets instead of 'None'", async () => {
-    const el = await mountCard(
-      { fan_entity: FAN },
-      makeHass([fan(), entity("number.f_minuteur", "45")]),
-    );
-    const select = $(el, ".ctrl-select") as HTMLSelectElement;
-    expect(select.value).toBe("45");
-    expect(select.selectedOptions[0].textContent?.trim()).toBe("45 min");
-    expect(Array.from(select.options).map((o) => o.value)).toEqual([
-      "0", "15", "30", "45", "60", "120", "240", "480",
-    ]);
+    expect(select.value).toBe("2 h");
+    expect(selected(select)).toEqual(["2 h"]);
     expect(select.classList.contains("active")).toBe(true);
   });
 
-  it("uses the select entity's own options (Klassfan)", async () => {
+  it("translates the 'off' option and shows no active timer", async () => {
     const el = await mountCard(
       { fan_entity: FAN },
-      makeHass([fan(), entity("select.f_minuteur", "2h", { options: ["off", "1h", "2h"] })]),
+      makeHass([fan(), entity("select.f_timer", "off", { options: PRESETS })], "fr"),
     );
     const select = $(el, ".ctrl-select") as HTMLSelectElement;
-    expect(select.value).toBe("2h");
+    expect(select.selectedOptions[0].textContent?.trim()).toBe("Aucune");
+    expect(select.classList.contains("active")).toBe(false);
+  });
+
+  it("keeps a value that is not an option selected", async () => {
+    const el = await mountCard(
+      { fan_entity: FAN },
+      makeHass([fan(), entity("select.f_timer", "45 min", { options: PRESETS })]),
+    );
+    const select = $(el, ".ctrl-select") as HTMLSelectElement;
+    expect(select.value).toBe("45 min");
+  });
+
+  it("sets the timer through the select", async () => {
+    const hass = makeHass([fan(), entity("select.f_timer", "off", { options: ["off", "1h", "2h"] })]);
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    const select = $(el, ".ctrl-select") as HTMLSelectElement;
+    select.value = "1h";
+    select.dispatchEvent(new Event("change"));
+    expect(hass.callService).toHaveBeenCalledWith("select", "select_option", { entity_id: "select.f_timer", option: "1h" });
   });
 
   it("selects the current preset on the first render", async () => {
@@ -103,7 +112,7 @@ describe("service calls (audit B6, B7)", () => {
     ]);
     hass.callService.mockRejectedValue(new Error("offline"));
     const el = await mountCard({ fan_entity: FAN }, hass);
-    await openTempPanel(el);
+    await openLightPanel(el);
     const slider = $(el, ".temp-slider") as HTMLInputElement;
     expect(slider.value).toBe("3000");
     slider.value = "5000";
@@ -120,19 +129,46 @@ describe("dial", () => {
   const sixSpeed = () =>
     makeHass([entity(FAN, "on", { supported_features: 1 | 16 | 32, percentage: 50, percentage_step: 100 / 6 })]);
 
-  const tap = (el: HTMLElement, xFrac: number, yFrac: number) => {
+  const pointer = (el: HTMLElement, type: string, xFrac: number, yFrac: number) => {
     const hit = $(el, ".hit") as unknown as SVGGraphicsElement;
     const svg = hit.ownerSVGElement as SVGSVGElement;
     svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300, height: 276, right: 300, bottom: 276, x: 0, y: 0, toJSON: () => ({}) });
-    hit.dispatchEvent(new MouseEvent("click", { clientX: xFrac * 300, clientY: yFrac * 276, bubbles: true }));
+    hit.dispatchEvent(new MouseEvent(type, { clientX: xFrac * 300, clientY: yFrac * 276, bubbles: true }));
   };
+  // Right end of the arc (about 45° below the horizontal) is the top speed,
+  // left end the first one.
+  const RIGHT_END = [0.5 + 0.28, 0.54 + 0.28] as const;
+  const LEFT_END = [0.5 - 0.28, 0.54 + 0.28] as const;
 
   it("sets the speed from the tapped angle", async () => {
     const hass = sixSpeed();
     const el = await mountCard({ fan_entity: FAN }, hass);
-    // Right end of the arc (about 45° below the horizontal) is the top speed.
-    tap(el, 0.5 + 0.28, 0.54 + 0.28);
+    pointer(el, "pointerdown", ...RIGHT_END);
+    pointer(el, "pointerup", ...RIGHT_END);
+    expect(hass.callService).toHaveBeenCalledTimes(1);
     expect(hass.callService).toHaveBeenCalledWith("fan", "set_percentage", { entity_id: FAN, percentage: 100 });
+  });
+
+  it("follows a drag and sends the speed once, on release", async () => {
+    const hass = sixSpeed();
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    pointer(el, "pointerdown", ...LEFT_END);
+    pointer(el, "pointermove", ...RIGHT_END);
+    await (el as unknown as { updateComplete: Promise<boolean> }).updateComplete;
+    expect($(el, ".speed-seg.active")?.textContent?.trim()).toBe("6");
+    expect(hass.callService).not.toHaveBeenCalled();
+    pointer(el, "pointerup", ...RIGHT_END);
+    expect(hass.callService).toHaveBeenCalledTimes(1);
+    expect(hass.callService).toHaveBeenCalledWith("fan", "set_percentage", { entity_id: FAN, percentage: 100 });
+  });
+
+  it("drops a cancelled drag", async () => {
+    const hass = sixSpeed();
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    pointer(el, "pointerdown", ...RIGHT_END);
+    pointer(el, "pointercancel", ...RIGHT_END);
+    pointer(el, "pointerup", ...RIGHT_END);
+    expect(hass.callService).not.toHaveBeenCalled();
   });
 
   it("keeps the colour-temperature slider collapsed until asked for", async () => {
@@ -142,7 +178,7 @@ describe("dial", () => {
     ]);
     const el = await mountCard({ fan_entity: FAN }, hass);
     expect($(el, ".temp-slider")).toBeNull();
-    await openTempPanel(el);
+    await openLightPanel(el);
     expect($(el, ".temp-slider")).not.toBeNull();
   });
 

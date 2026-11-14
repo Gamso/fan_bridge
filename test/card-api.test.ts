@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { $, entity, makeHass, mountCard } from "./helpers";
+import { $, entity, makeHass, mountCard, openLightPanel } from "./helpers";
 
 type CardClass = {
   getStubConfig(hass?: unknown, entities?: string[]): { fan_entity: string };
@@ -26,6 +26,12 @@ describe("getStubConfig (audit A1)", () => {
     expect(Card.getStubConfig(hass, []).fan_entity).toBe("fan.attic");
   });
 
+  it("prefers a FanBridge fan", () => {
+    const hass = makeHass([entity("fan.attic", "off"), entity("fan.bridge", "off")]);
+    hass.entities!["fan.attic"].platform = "tuya";
+    expect(Card.getStubConfig(hass, ["fan.attic", "fan.bridge"]).fan_entity).toBe("fan.bridge");
+  });
+
   it("keeps a placeholder when there is no fan", () => {
     expect(Card.getStubConfig(undefined, []).fan_entity).toBe("fan.ceiling_fan_with_light");
   });
@@ -40,6 +46,13 @@ describe("missing entity (audit D2)", () => {
   it("names the missing entity in French", async () => {
     const el = await mountCard({ fan_entity: "fan.gone" }, makeHass([], "fr"));
     expect($(el, ".error")?.textContent?.trim()).toBe("Entité fan.gone introuvable");
+  });
+});
+
+describe("card picker", () => {
+  it("links the documentation", () => {
+    const card = window.customCards?.find((c) => c.type === "fan-bridge-card");
+    expect(card?.documentationURL).toMatch(/docs\/en\/card\.md$/);
   });
 });
 
@@ -61,16 +74,21 @@ describe("FanBridge fan only", () => {
 
 describe("sizing (audit A6)", () => {
   it("grows with the rendered rows", async () => {
+    // Header (2) and the lone power button (2).
     const plain = await mountCard({ fan_entity: FAN, show_name: false }, makeHass([fan(16 | 32)]));
-    expect(plain.getCardSize()).toBe(3);
+    expect(plain.getCardSize()).toBe(4);
+    // Header (2), dial (6), season (2), one row of chips (1).
     const full = await mountCard(
       { fan_entity: FAN },
       makeHass([
-        fan(),
+        fan(1 | 4 | 16 | 32),
         entity("light.f", "on", { supported_color_modes: ["color_temp"] }),
       ]),
     );
-    expect(full.getCardSize()).toBe(6);
+    expect(full.getCardSize()).toBe(11);
+    // The open light panel adds its brightness and temperature sliders.
+    await openLightPanel(full);
+    expect(full.getCardSize()).toBe(13);
   });
 
   it("exposes sections-view grid options", async () => {

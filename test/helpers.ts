@@ -17,7 +17,6 @@ export function entity(
 const ROLE_OF_DOMAIN: Record<string, string | undefined> = {
   light: "light",
   select: "timer",
-  number: "timer",
   switch: "sound",
 };
 
@@ -65,9 +64,10 @@ export async function mountCard(
   return el;
 }
 
-// The colour-temperature slider is tucked behind a toggle next to the light chip.
-export async function openTempPanel(el: CardElement): Promise<void> {
-  ($(el, ".temp-toggle") as HTMLButtonElement).click();
+// The brightness and colour-temperature sliders are tucked behind a toggle
+// next to the light chip.
+export async function openLightPanel(el: CardElement): Promise<void> {
+  ($(el, ".light-toggle") as HTMLButtonElement).click();
   await el.updateComplete;
 }
 

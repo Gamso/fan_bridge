@@ -1,7 +1,6 @@
 {
   "card": {
     "name_default": "Ventilateur plafond",
-    "subtitle": "Ventilateur connecté",
     "unavailable": "Indisponible",
     "entity_not_found": "Entité {entity} introuvable",
     "not_bridge": "{entity} n'est pas un ventilateur FanBridge. Choisissez un ventilateur créé par l'intégration FanBridge.",
@@ -9,7 +8,6 @@
   },
   "speed": {
     "label": "VITESSE",
-    "off": "Arrêt",
     "s1": "Très doux",
     "s2": "Doux",
     "s3": "Modéré",
@@ -29,10 +27,11 @@
   },
   "controls": {
     "light": "Lumière",
+    "light_settings": "Réglages de la lumière",
+    "brightness": "Luminosité",
     "color_temp": "Température de couleur",
     "temp_warm": "Chaud",
     "temp_cool": "Froid",
-    "direction": "Saison",
     "dir_summer": "Été",
     "dir_winter": "Hiver",
     "timer": "Minuterie",
@@ -46,7 +45,6 @@
     "dir_winter_hint": "Air brassé vers le plafond"
   },
   "editor": {
-    "title": "Paramètres de la carte ventilateur",
     "name": "Nom de la carte",
     "fan_entity": "Entité ventilateur",
     "show_name": "Afficher le nom de la carte",

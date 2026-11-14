@@ -23,6 +23,6 @@ describe("styles (audit A4, A5)", () => {
   });
 
   it("shows a focus ring on the slider and buttons", () => {
-    expect(css).toMatch(/button:focus-visible,\s*\.temp-slider:focus-visible\s*\{\s*outline:/);
+    expect(css).toMatch(/button:focus-visible,\s*\.slider:focus-visible\s*\{\s*outline:/);
   });
 });
