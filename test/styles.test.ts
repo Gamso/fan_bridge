@@ -18,6 +18,13 @@ describe("styles (audit A4, A5)", () => {
     expect(css).toContain("var(--primary-text-color)");
   });
 
+  it("mixes accent text with the theme's text colour, not with white", () => {
+    expect(css).toContain("--wc-a-text: color-mix(in srgb, var(--wc-a) 70%, var(--primary-text-color))");
+    for (const rule of [/\.badge\s*\{[^}]*\}/, /\.speed-seg\.filled\s*\{[^}]*\}/, /\.center \.big small\s*\{[^}]*\}/]) {
+      expect(css.match(rule)?.[0]).toContain("color: var(--wc-a-text)");
+    }
+  });
+
   it("stops the spin for users who prefer reduced motion", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.fan-svg\s*\{\s*animation: none !important;/);
   });
