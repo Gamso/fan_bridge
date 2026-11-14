@@ -33,15 +33,17 @@ jobs:
           grep -q "CARD_VERSION = \"$version\"" src/version.ts \
             || { echo "::error file=src/version.ts::CARD_VERSION does not match tag $GITHUB_REF_NAME"; exit 1; }
 
-      # The notes are the CHANGELOG section of this version.
+      # The notes are the CHANGELOG section of this version, under a
+      # "Highlights" heading, like the 1.0.0 release.
       - name: Extract the release notes
         run: |
           version="${GITHUB_REF_NAME#v}"
-          awk -v v="## $version" '$0 == v {found=1; next} /^## / && found {exit} found' CHANGELOG.md > notes.md
-          if [ ! -s notes.md ]; then
+          awk -v v="## $version" '$0 == v {found=1; next} /^## / && found {exit} found' CHANGELOG.md > section.md
+          if ! grep -q '[^[:space:]]' section.md; then
             echo "::error file=CHANGELOG.md::no section '## $version'"
             exit 1
           fi
+          { echo "## Highlights"; cat section.md; } > notes.md
 
       - uses: actions/setup-node@v4
         with:
@@ -62,9 +64,10 @@ jobs:
           zip -r "$GITHUB_WORKSPACE/fan_bridge.zip" . -x '__pycache__/*' -x '*/__pycache__/*' -x 'www/*.map'
           unzip -l "$GITHUB_WORKSPACE/fan_bridge.zip"
 
+      # Titled with the bare version, like the 1.0.0 release.
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" fan_bridge.zip \
-            --title "FanBridge $GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+            --title "${GITHUB_REF_NAME#v}" --notes-file notes.md --verify-tag
