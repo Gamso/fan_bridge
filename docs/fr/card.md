@@ -23,7 +23,7 @@ L'éditeur visuel ne propose que les ventilateurs de l'intégration FanBridge, e
 
 ## Ce qu'elle affiche
 
-- **Cadran des vitesses** : 270° avec un pas numéroté par vitesse. Touchez l'arc ou un numéro pour choisir une vitesse. Le nombre de vitesses vient du `percentage_step` du ventilateur (6 s'il n'est pas annoncé) ; les ventilateurs à 6 vitesses ont des vitesses nommées (Très doux, Doux, Modéré, Moyen, Fort, Turbo), les autres « Vitesse N ». Un ventilateur de plus de 10 pas (vitesse continue) en a 6.
+- **Cadran des vitesses** : 270° avec un pas numéroté par vitesse. Touchez l'arc ou un numéro pour choisir une vitesse, ou glissez le long de l'arc : le cadran suit et la vitesse est envoyée une seule fois, au relâchement. Le nombre de vitesses vient du `percentage_step` du ventilateur (6 s'il n'est pas annoncé) ; les ventilateurs à 6 vitesses ont des vitesses nommées (Très doux, Doux, Modéré, Moyen, Fort, Turbo), les autres « Vitesse N ». Un ventilateur de plus de 10 pas (vitesse continue) en a 6.
 - **Bouton marche/arrêt** dans l'ouverture du cadran, affiché seulement si le ventilateur peut être allumé et éteint. Un ventilateur tout ou rien sans vitesses n'a pas de cadran.
 - **Icône de ventilateur animée** qui tourne plus vite avec la vitesse, et immobile quand le navigateur demande de réduire les animations.
 - **Sens des pales** (été / hiver) sur sa propre ligne, indépendant de la marche, avec un effet de fond différent pour chacun (filets d'air / particules qui montent). Il apparaît pour les ventilateurs qui gèrent `direction`. Voir [Été / hiver](#été--hiver).
