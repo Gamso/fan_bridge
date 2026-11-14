@@ -753,7 +753,7 @@ class FanBridgeCard extends LitElement {
       </ha-card>`;
     }
 
-    if (!isBridgeFan(fan)) {
+    if (!isBridgeFan(this.hass, this._entities.fan)) {
       return html`<ha-card>
         <div class="error" role="alert">
           ${this._t("card.not_bridge", { entity: this._config.fan_entity })}

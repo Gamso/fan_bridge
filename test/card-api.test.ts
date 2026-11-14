@@ -43,6 +43,22 @@ describe("missing entity (audit D2)", () => {
   });
 });
 
+describe("FanBridge fan only", () => {
+  it("shows an unavailable FanBridge fan as unavailable, not as a foreign fan", async () => {
+    // Home Assistant drops using_backup (an extra attribute) while unavailable.
+    const el = await mountCard({ fan_entity: FAN }, makeHass([entity(FAN, "unavailable", { using_backup: undefined })]));
+    expect($(el, ".error")).toBeNull();
+    expect($(el, ".unavailable-msg")?.textContent?.trim()).toBe("Unavailable");
+  });
+
+  it("refuses a fan of another integration", async () => {
+    const hass = makeHass([fan()]);
+    hass.entities![FAN].platform = "tuya";
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    expect($(el, ".error")?.textContent).toContain("is not a FanBridge fan");
+  });
+});
+
 describe("sizing (audit A6)", () => {
   it("grows with the rendered rows", async () => {
     const plain = await mountCard({ fan_entity: FAN, show_name: false }, makeHass([fan(16 | 32)]));
