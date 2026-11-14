@@ -6,7 +6,7 @@
 
 ```
 custom_components/fan_bridge/   The integration
-  www/fan-bridge-card.js        The card's bundle, built from src/ (committed)
+  www/fan-bridge-card.js        The card's bundle, built from src/ (not committed)
 src/                            The card's sources (TypeScript, Lit)
 test/                           The card's tests (Vitest)
 tests/                          The integration's tests (pytest)
@@ -17,6 +17,8 @@ docs/                           This documentation (en/, fr/, images/)
 ## Integration
 
 Python 3.14, Home Assistant 2026.2 or newer.
+
+Build the card first (`npm ci && npm run build`): a test checks the bundle the integration serves.
 
 ```bash
 pip install -r requirements_test.txt
@@ -36,7 +38,7 @@ npm test            # Vitest (jsdom)
 npm run build       # writes custom_components/fan_bridge/www/fan-bridge-card.js
 ```
 
-Commit the rebuilt bundle with the sources: CI fails when it differs from a fresh build. `npm run watch` also writes a sourcemap for local debugging; it is git-ignored and never published.
+The bundle is **not committed**: every pull request touching the card would conflict on it. The release workflow builds it and ships it in the release zip. `npm run watch` also writes a sourcemap for local debugging; it is git-ignored and never published.
 
 The version lives in `package.json`, `src/version.ts` and `custom_components/fan_bridge/manifest.json`; a test fails when they disagree.
 
@@ -46,9 +48,16 @@ Build the card on your host first (`npm install && npm run build`), then **Dev C
 
 ## Continuous integration
 
-- **Build**: typecheck, lint, tests, build, bundles up to date
-- **Integration**: pytest, ruff
+- **Build**: typecheck, lint, tests, build
+- **Integration**: build of the card, pytest, ruff
 - **Validate**: hassfest and HACS. Translation strings must not contain anything that looks like HTML (`<name>`), hassfest rejects it.
+
+## Releases
+
+1. Set the version in `package.json`, `src/version.ts` and `custom_components/fan_bridge/manifest.json`, and add a `## <version>` section to `CHANGELOG.md`.
+2. Push a tag named after the version (`1.1.0` or `v1.1.0`).
+
+The **Release** workflow checks the versions, builds the card, zips `custom_components/fan_bridge/` (bundle included) into `fan_bridge.zip` and publishes the GitHub release with the CHANGELOG section as notes. HACS installs that zip (`zip_release` in `hacs.json`), and does not offer the default branch, which has no bundle.
 
 ## Documentation
 

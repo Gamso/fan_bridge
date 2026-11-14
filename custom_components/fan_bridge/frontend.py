@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from pathlib import Path
 
 from homeassistant.components.frontend import add_extra_js_url
@@ -10,6 +11,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 CARD_FILE = "fan-bridge-card.js"
 CARD_URL_PATH = f"/{DOMAIN}/{CARD_FILE}"
@@ -40,5 +43,9 @@ async def async_register_card(hass: HomeAssistant) -> None:
     integration = await async_get_integration(hass, DOMAIN)
     card_path = Path(__file__).parent / "www" / CARD_FILE
     digest = await hass.async_add_executor_job(_digest, card_path)
+    if not digest:
+        # The bundle ships in the release zip, not in the repository: a copy
+        # of the sources has none until `npm run build`.
+        _LOGGER.warning("The FanBridge card is missing (%s): install a release, or build it with `npm run build`", card_path)
     await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL_PATH, str(card_path), cache_headers=False)])
     add_extra_js_url(hass, f"{CARD_URL_PATH}?v={integration.version}-{digest}")
