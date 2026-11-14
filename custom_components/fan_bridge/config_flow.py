@@ -6,7 +6,8 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 
 from .const import (
@@ -56,8 +57,16 @@ def _entity_marker(key: str, value: Any, *, required: bool = False) -> vol.Marke
     return marker(key)
 
 
-def _entity(domain: str | list[str]) -> selector.EntitySelector:
-    return selector.EntitySelector(selector.EntitySelectorConfig(domain=domain))
+def _entity(domain: str | list[str], exclude: list[str] | None = None) -> selector.EntitySelector:
+    config = selector.EntitySelectorConfig(domain=domain)
+    if exclude:
+        config["exclude_entities"] = exclude
+    return selector.EntitySelector(config)
+
+
+def _bridge_entities(hass: HomeAssistant) -> list[str]:
+    """The entities FanBridge created: never a source, or the calls would loop."""
+    return sorted(entry.entity_id for entry in er.async_get(hass).entities.values() if entry.platform == DOMAIN)
 
 
 def _text(value: str | None, key: str) -> vol.Marker:
@@ -87,11 +96,12 @@ class FanBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=user_input[CONF_NAME], data=data)
 
         data = user_input or {}
+        bridges = _bridge_entities(self.hass)
         schema = vol.Schema(
             {
                 vol.Required(CONF_NAME, default=data.get(CONF_NAME, "")): selector.TextSelector(),
-                _entity_marker(CONF_FAN, data.get(CONF_FAN), required=True): _entity("fan"),
-                _entity_marker(CONF_FALLBACK_FAN, data.get(CONF_FALLBACK_FAN)): _entity("fan"),
+                _entity_marker(CONF_FAN, data.get(CONF_FAN), required=True): _entity("fan", bridges),
+                _entity_marker(CONF_FALLBACK_FAN, data.get(CONF_FALLBACK_FAN)): _entity("fan", bridges),
             }
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
@@ -145,16 +155,17 @@ class FanBridgeOptionsFlow(OptionsFlow):
                 return await self.async_step_menu()
 
         data = user_input or current
+        bridges = _bridge_entities(self.hass)
         schema = vol.Schema(
             {
-                _entity_marker(CONF_FAN, data.get(CONF_FAN), required=True): _entity("fan"),
-                _entity_marker(CONF_FALLBACK_FAN, data.get(CONF_FALLBACK_FAN)): _entity("fan"),
-                _entity_marker(CONF_LIGHT, data.get(CONF_LIGHT)): _entity("light"),
-                _entity_marker(CONF_FALLBACK_LIGHT, data.get(CONF_FALLBACK_LIGHT)): _entity("light"),
-                _entity_marker(CONF_TIMER, data.get(CONF_TIMER)): _entity(["number", "select"]),
-                _entity_marker(CONF_FALLBACK_TIMER, data.get(CONF_FALLBACK_TIMER)): _entity(["number", "select"]),
-                _entity_marker(CONF_SOUND, data.get(CONF_SOUND)): _entity("switch"),
-                _entity_marker(CONF_FALLBACK_SOUND, data.get(CONF_FALLBACK_SOUND)): _entity("switch"),
+                _entity_marker(CONF_FAN, data.get(CONF_FAN), required=True): _entity("fan", bridges),
+                _entity_marker(CONF_FALLBACK_FAN, data.get(CONF_FALLBACK_FAN)): _entity("fan", bridges),
+                _entity_marker(CONF_LIGHT, data.get(CONF_LIGHT)): _entity("light", bridges),
+                _entity_marker(CONF_FALLBACK_LIGHT, data.get(CONF_FALLBACK_LIGHT)): _entity("light", bridges),
+                _entity_marker(CONF_TIMER, data.get(CONF_TIMER)): _entity(["number", "select"], bridges),
+                _entity_marker(CONF_FALLBACK_TIMER, data.get(CONF_FALLBACK_TIMER)): _entity(["number", "select"], bridges),
+                _entity_marker(CONF_SOUND, data.get(CONF_SOUND)): _entity("switch", bridges),
+                _entity_marker(CONF_FALLBACK_SOUND, data.get(CONF_FALLBACK_SOUND)): _entity("switch", bridges),
                 vol.Optional(CONF_RELOAD_MAIN, default=bool(data.get(CONF_RELOAD_MAIN))): selector.BooleanSelector(),
                 _entity_marker(CONF_PRESENCE, data.get(CONF_PRESENCE)): _entity(["binary_sensor", "device_tracker"]),
             }
