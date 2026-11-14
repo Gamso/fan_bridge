@@ -20,37 +20,46 @@ const selected = (select: HTMLSelectElement) =>
   Array.from(select.options).filter((o) => o.selected).map((o) => o.value);
 
 describe("selects (audit B5)", () => {
+  // The options of the integration's timer select for a number timer.
+  const PRESETS = ["off", "15 min", "30 min", "1 h", "2 h", "4 h", "8 h"];
+
   it("selects the timer value on the first render", async () => {
     const el = await mountCard(
       { fan_entity: FAN },
-      makeHass([fan(), entity("number.f_minuteur", "120.0")]),
+      makeHass([fan(), entity("select.f_timer", "2 h", { options: PRESETS })]),
     );
     const select = $(el, ".ctrl-select") as HTMLSelectElement;
-    expect(select.value).toBe("120");
-    expect(selected(select)).toEqual(["120"]);
-  });
-
-  it("shows a timer value outside the presets instead of 'None'", async () => {
-    const el = await mountCard(
-      { fan_entity: FAN },
-      makeHass([fan(), entity("number.f_minuteur", "45")]),
-    );
-    const select = $(el, ".ctrl-select") as HTMLSelectElement;
-    expect(select.value).toBe("45");
-    expect(select.selectedOptions[0].textContent?.trim()).toBe("45 min");
-    expect(Array.from(select.options).map((o) => o.value)).toEqual([
-      "0", "15", "30", "45", "60", "120", "240", "480",
-    ]);
+    expect(select.value).toBe("2 h");
+    expect(selected(select)).toEqual(["2 h"]);
     expect(select.classList.contains("active")).toBe(true);
   });
 
-  it("uses the select entity's own options (Klassfan)", async () => {
+  it("translates the 'off' option and shows no active timer", async () => {
     const el = await mountCard(
       { fan_entity: FAN },
-      makeHass([fan(), entity("select.f_minuteur", "2h", { options: ["off", "1h", "2h"] })]),
+      makeHass([fan(), entity("select.f_timer", "off", { options: PRESETS })], "fr"),
     );
     const select = $(el, ".ctrl-select") as HTMLSelectElement;
-    expect(select.value).toBe("2h");
+    expect(select.selectedOptions[0].textContent?.trim()).toBe("Aucune");
+    expect(select.classList.contains("active")).toBe(false);
+  });
+
+  it("keeps a value that is not an option selected", async () => {
+    const el = await mountCard(
+      { fan_entity: FAN },
+      makeHass([fan(), entity("select.f_timer", "45 min", { options: PRESETS })]),
+    );
+    const select = $(el, ".ctrl-select") as HTMLSelectElement;
+    expect(select.value).toBe("45 min");
+  });
+
+  it("sets the timer through the select", async () => {
+    const hass = makeHass([fan(), entity("select.f_timer", "off", { options: ["off", "1h", "2h"] })]);
+    const el = await mountCard({ fan_entity: FAN }, hass);
+    const select = $(el, ".ctrl-select") as HTMLSelectElement;
+    select.value = "1h";
+    select.dispatchEvent(new Event("change"));
+    expect(hass.callService).toHaveBeenCalledWith("select", "select_option", { entity_id: "select.f_timer", option: "1h" });
   });
 
   it("selects the current preset on the first render", async () => {
