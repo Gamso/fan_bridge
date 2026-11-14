@@ -27,6 +27,8 @@
   },
   "controls": {
     "light": "Light",
+    "light_settings": "Light settings",
+    "brightness": "Brightness",
     "color_temp": "Color temperature",
     "temp_warm": "Warm",
     "temp_cool": "Cool",
