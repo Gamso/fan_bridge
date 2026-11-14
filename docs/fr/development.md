@@ -10,7 +10,6 @@ custom_components/fan_bridge/   L'intégration
 src/                            Les sources de la carte (TypeScript, Lit)
 test/                           Les tests de la carte (Vitest)
 tests/                          Les tests de l'intégration (pytest)
-dist/fan-bridge-card.js         Le même fichier (versionné)
 docs/                           Cette documentation (en/, fr/, images/)
 .devcontainer/                  Un Home Assistant pour essayer
 ```
@@ -34,10 +33,10 @@ npm ci
 npm run typecheck   # tsc sur les sources et les tests
 npm run lint        # ESLint
 npm test            # Vitest (jsdom)
-npm run build       # écrit dist/ et custom_components/fan_bridge/www/
+npm run build       # écrit custom_components/fan_bridge/www/fan-bridge-card.js
 ```
 
-Versionnez **les deux** fichiers reconstruits avec les sources : la CI échoue s'ils diffèrent d'une construction neuve. `npm run watch` écrit aussi une sourcemap pour le débogage local ; elle est ignorée par git et jamais publiée.
+Versionnez le fichier reconstruit avec les sources : la CI échoue s’il diffère d’une construction neuve. `npm run watch` écrit aussi une sourcemap pour le débogage local ; elle est ignorée par git et jamais publiée.
 
 La version est dans `package.json`, `src/version.ts` et `custom_components/fan_bridge/manifest.json` ; un test échoue si elles divergent.
 

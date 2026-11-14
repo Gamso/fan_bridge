@@ -1,4 +1,7 @@
 node_modules/
+# The bundle is built into custom_components/fan_bridge/www/; dist/ is a
+# leftover of older builds.
+dist/
 # Sourcemaps are only emitted by `npm run watch` for local debugging and must
 # never be committed.
 custom_components/fan_bridge/www/*.map

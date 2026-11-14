@@ -37,13 +37,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      # HACS serves the committed bundle: fail if it is not the output of the
-      # committed sources.
-      - name: Check that the bundles are up to date
+      # The integration serves the committed bundle: fail if it is not the
+      # output of the committed sources.
+      - name: Check that the bundle is up to date
         run: |
-          git status --porcelain dist/ custom_components/fan_bridge/www/
-          git diff --exit-code -- dist/ custom_components/fan_bridge/www/
-          test -z "$(git status --porcelain dist/ custom_components/fan_bridge/www/)"
+          git status --porcelain custom_components/fan_bridge/www/
+          git diff --exit-code -- custom_components/fan_bridge/www/
+          test -z "$(git status --porcelain custom_components/fan_bridge/www/)"
 
   integration:
     name: Integration tests and lint

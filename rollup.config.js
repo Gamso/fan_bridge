@@ -3,17 +3,19 @@ import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
 import terser from "@rollup/plugin-terser";
 import json from "@rollup/plugin-json";
-import { copyFileSync, mkdirSync } from "node:fs";
 
+// The bundle is written straight into the integration, which serves it and
+// loads it in every dashboard (HACS installs the integration folder).
 // Sourcemaps are only produced in watch mode (local development). The
-// committed bundle carries no sourceMappingURL, so HACS installs never 404 on
-// a missing .map file.
+// committed bundle carries no sourceMappingURL, so installs never 404 on a
+// missing .map file.
 const dev = process.env.ROLLUP_WATCH === "true";
+const OUT_DIR = "custom_components/fan_bridge/www";
 
 export default {
   input: "src/index.ts",
   output: {
-    file: "dist/fan-bridge-card.js",
+    file: `${OUT_DIR}/fan-bridge-card.js`,
     format: "es",
     sourcemap: dev,
   },
@@ -25,16 +27,8 @@ export default {
       tsconfig: "./tsconfig.json",
       declaration: false,
       sourceMap: dev,
+      outDir: OUT_DIR,
     }),
     terser(),
-    // The same bundle is served by the integration, which loads it in every
-    // dashboard: keep its copy in step with dist/ (used by manual installs).
-    {
-      name: "copy-to-integration",
-      writeBundle() {
-        mkdirSync("custom_components/fan_bridge/www", { recursive: true });
-        copyFileSync("dist/fan-bridge-card.js", "custom_components/fan_bridge/www/fan-bridge-card.js");
-      },
-    },
   ],
 };

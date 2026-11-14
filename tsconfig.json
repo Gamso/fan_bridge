@@ -5,7 +5,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "declaration": false,
     "sourceMap": true,
-    "outDir": "dist",
+    "outDir": "custom_components/fan_bridge/www",
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
@@ -18,5 +18,5 @@
     "useDefineForClassFields": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "custom_components"]
 }

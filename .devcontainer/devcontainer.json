@@ -14,7 +14,7 @@
   "postCreateCommand": "bash /workspaces/fan_bridge/.devcontainer/setup.sh",
   "mounts": [
     "source=${localWorkspaceFolder}/.devcontainer/config,target=/config,type=bind",
-    "source=${localWorkspaceFolder}/dist,target=/config/www/fan_bridge,type=bind",
+    "source=${localWorkspaceFolder}/custom_components/fan_bridge/www,target=/config/www/fan_bridge,type=bind",
     "source=${localWorkspaceFolder}/custom_components/fan_bridge,target=/config/custom_components/fan_bridge,type=bind"
   ],
   "customizations": {
