@@ -33,6 +33,10 @@ The stop timer of the fan in charge. For a `number` entity the options are **off
 
 The beep switch in charge. Same attributes.
 
+## Renamed entities
+
+The options store entity ids. When you rename one of the main, backup, presence or remote entities, the integration writes the new id into its options and reloads: nothing to set again.
+
 ## Remote buttons
 
 Remote buttons are not entities: they are stored in the options and listed in **Configure → Remotes**, see [Remotes](remotes.md). Each pressed button calls the services of the merged entities (`fan.toggle`, `fan.increase_speed`, `fan.set_percentage`, `fan.set_direction`, `fan.oscillate`, `fan.set_preset_mode`, `light.toggle`, `switch.toggle`, ...).
