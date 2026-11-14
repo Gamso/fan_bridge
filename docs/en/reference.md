@@ -23,7 +23,7 @@ The fan in charge, see [Main and backup fans](fans.md).
 
 ## `light.<name>_light`
 
-The light in charge: on/off, brightness and colour temperature when it supports them. Same attributes.
+The light in charge: on/off, brightness and colour temperature when it supports them. Colours are not relayed: a colour light is offered as a colour-temperature light if it has one, as a dimmable light otherwise. Same attributes.
 
 ## `select.<name>_timer`
 
