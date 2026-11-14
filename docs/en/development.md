@@ -10,7 +10,6 @@ custom_components/fan_bridge/   The integration
 src/                            The card's sources (TypeScript, Lit)
 test/                           The card's tests (Vitest)
 tests/                          The integration's tests (pytest)
-dist/fan-bridge-card.js         The same bundle (committed)
 docs/                           This documentation (en/, fr/, images/)
 .devcontainer/                  A Home Assistant to try it in
 ```
@@ -34,10 +33,10 @@ npm ci
 npm run typecheck   # tsc on sources and tests
 npm run lint        # ESLint
 npm test            # Vitest (jsdom)
-npm run build       # writes dist/ and custom_components/fan_bridge/www/
+npm run build       # writes custom_components/fan_bridge/www/fan-bridge-card.js
 ```
 
-Commit **both** rebuilt bundles with the sources: CI fails when they differ from a fresh build. `npm run watch` also writes a sourcemap for local debugging; it is git-ignored and never published.
+Commit the rebuilt bundle with the sources: CI fails when it differs from a fresh build. `npm run watch` also writes a sourcemap for local debugging; it is git-ignored and never published.
 
 The version lives in `package.json`, `src/version.ts` and `custom_components/fan_bridge/manifest.json`; a test fails when they disagree.
 

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Custom Home Assistant card for smart ceiling fans (CREATE Windcalm, Klassfan, …)",
   "type": "module",
-  "main": "dist/fan-bridge-card.js",
+  "main": "custom_components/fan_bridge/www/fan-bridge-card.js",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
