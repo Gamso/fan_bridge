@@ -34,7 +34,7 @@ The visual editor only lists the fans of the FanBridge integration, and only ask
 
 - Controls that do not apply while the fan is off (light, beep, preset, timer, direction) are disabled. A fan in `unknown` state counts as off and unavailable.
 - **Stop timer presets**, always, also for fans whose timer is a free-form `number`.
-- **Light colour temperature**, tucked behind a button next to the light chip.
+- **Light brightness and colour temperature**, tucked behind a button next to the light chip; each slider is shown when the light supports it.
 
   ![The light colour temperature panel](../images/card/en/light.png)
 

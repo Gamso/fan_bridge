@@ -27,6 +27,8 @@
   },
   "controls": {
     "light": "Lumière",
+    "light_settings": "Réglages de la lumière",
+    "brightness": "Luminosité",
     "color_temp": "Température de couleur",
     "temp_warm": "Chaud",
     "temp_cool": "Froid",
