@@ -342,6 +342,9 @@ const ht={attribute:!0,type:String,converter:b,reflect:!1,hasChanged:$},pt=(t=ht
     .card-content {
       --wc-a: var(--wc-accent);
       --wc-a-soft: color-mix(in srgb, var(--wc-a) 55%, white);
+      /* Accent for text: pulled towards the theme's text colour rather than
+         white, so it stays readable on a light card as on a dark one. */
+      --wc-a-text: color-mix(in srgb, var(--wc-a) 70%, var(--primary-text-color));
       --wc-on-a: color-mix(in srgb, var(--wc-a) 18%, black);
       --wc-glow: color-mix(in srgb, var(--wc-a) 30%, transparent);
       position: relative;
@@ -467,7 +470,7 @@ const ht={attribute:!0,type:String,converter:b,reflect:!1,hasChanged:$},pt=(t=ht
       text-transform: uppercase;
       padding: 4px 9px;
       border-radius: 999px;
-      color: var(--wc-a-soft);
+      color: var(--wc-a-text);
       border: 1px solid color-mix(in srgb, var(--wc-a) 50%, transparent);
       background: color-mix(in srgb, var(--wc-a) 12%, transparent);
     }
@@ -595,7 +598,7 @@ const ht={attribute:!0,type:String,converter:b,reflect:!1,hasChanged:$},pt=(t=ht
       font-size: 24px;
       font-weight: 700;
       margin-left: 2px;
-      color: var(--wc-a-soft);
+      color: var(--wc-a-text);
     }
     .idle .center .big {
       color: var(--wc-dim);
@@ -621,7 +624,7 @@ const ht={attribute:!0,type:String,converter:b,reflect:!1,hasChanged:$},pt=(t=ht
       transition: color 0.15s, background 0.15s;
     }
     .speed-seg.filled {
-      color: var(--wc-a-soft);
+      color: var(--wc-a-text);
     }
     .speed-seg.active {
       color: var(--wc-on-a);
