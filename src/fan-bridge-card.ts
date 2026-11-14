@@ -7,7 +7,6 @@ import { localize } from "./localize/localize";
 import {
   FanBridgeCardConfig,
   ResolvedEntities,
-  TIMER_OPTIONS_MIN,
   DEFAULT_SPEED_COUNT,
   percentageToSpeed,
   speedCount,
@@ -20,6 +19,7 @@ import {
   FanFeature,
   isFanOn,
   isFanUnavailable,
+  UNAVAILABLE_STATES,
 } from "./types";
 
 class FanBridgeCard extends LitElement {
@@ -259,46 +259,28 @@ class FanBridgeCard extends LitElement {
     return p ? p.charAt(0).toUpperCase() + p.slice(1) : p;
   }
 
-  // "select" domain covers fans (e.g. Klassfan) whose timer is a predefined
-  // list of options rather than a free-form "number" entity.
-  private get _timerDomain(): "number" | "select" {
-    return this._entities.timer?.startsWith("select.") ? "select" : "number";
-  }
-
-  // Normalize so the value matches an option string exactly. A "number" entity
-  // may report "30.0" while the options are "30" — compare numerically there;
-  // a "select" entity's state is already one of its literal option strings.
+  // The timer of a FanBridge fan is always a select: the integration offers a
+  // number timer as presets ("off", "15 min", "2 h"…) and keeps the options of
+  // a select timer as they are.
   private get _timerValue(): string {
     const raw = this._timerState?.state;
-    if (raw === undefined || raw === null || raw === "") return "";
-    if (this._timerDomain === "select") return String(raw);
-    const n = Number(raw);
-    return Number.isNaN(n) ? String(raw) : String(n);
+    return raw === undefined || raw === null || UNAVAILABLE_STATES.has(raw) ? "" : String(raw);
   }
 
   private get _timerOptions(): string[] {
-    if (this._timerDomain === "select") {
-      return this._timerState?.attributes?.options ?? [];
-    }
-    return TIMER_OPTIONS_MIN.map(String);
+    return this._timerState?.attributes?.options ?? [];
   }
 
-  // Options rendered in the timer select: the entity's current value is added
-  // when it is not one of the presets (e.g. a number timer set to 45 min
-  // elsewhere), so the select never falls back to showing "None".
+  // The current value is added when it is not an option, so the select never
+  // falls back to showing another one.
   private get _timerChoices(): string[] {
     const options = this._timerOptions;
     const value = this._timerValue;
-    if (value === "" || options.includes(value)) return options;
-    if (this._timerDomain === "select") return [...options, value];
-    return [...options, value].sort((a, b) => Number(a) - Number(b));
+    return value === "" || options.includes(value) ? options : [...options, value];
   }
 
   private _formatTimerOption(raw: string): string {
-    const n = Number(raw);
-    if (raw.trim() === "" || Number.isNaN(n)) return raw;
-    if (n === 0) return this._t("controls.timer_none");
-    return n < 60 ? `${n} min` : `${n / 60} h`;
+    return raw.toLowerCase() === "off" ? this._t("controls.timer_none") : raw;
   }
 
   // The first option is the "no timer" sentinel (0 minutes, or a fan's own
@@ -405,18 +387,10 @@ class FanBridgeCard extends LitElement {
 
   private _setTimer(ev: Event): void {
     if (!this._entities.timer) return;
-    const value = (ev.target as HTMLSelectElement).value;
-    if (this._timerDomain === "select") {
-      this._call("select", "select_option", {
-        entity_id: this._entities.timer,
-        option: value,
-      });
-    } else {
-      this._call("number", "set_value", {
-        entity_id: this._entities.timer,
-        value: Number(value),
-      });
-    }
+    this._call("select", "select_option", {
+      entity_id: this._entities.timer,
+      option: (ev.target as HTMLSelectElement).value,
+    });
   }
 
   private _toggleSound(): void {
