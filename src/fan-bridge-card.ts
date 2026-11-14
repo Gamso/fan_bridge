@@ -1464,7 +1464,13 @@ if (!customElements.get("fan-bridge-card")) {
 
 declare global {
   interface Window {
-    customCards?: { type: string; name: string; description: string; preview?: boolean }[];
+    customCards?: {
+      type: string;
+      name: string;
+      description: string;
+      preview?: boolean;
+      documentationURL?: string;
+    }[];
   }
 }
 
@@ -1475,4 +1481,5 @@ if (!window.customCards.some((card) => card.type === "fan-bridge-card"))
   name: "FanBridge Card",
   description: "Custom card for smart ceiling fans (CREATE Windcalm, Klassfan, …)",
   preview: true,
+  documentationURL: "https://github.com/Gamso/fan_bridge/blob/main/docs/en/card.md",
 });
