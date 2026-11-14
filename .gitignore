@@ -1,9 +1,15 @@
 node_modules/
-# dist/fan-bridge-card.js is versioned on purpose: HACS serves it straight from
-# the repository. Sourcemaps are only emitted by `npm run watch` for local
-# debugging and must never be committed.
-dist/*.map
+# Sourcemaps are only emitted by `npm run watch` for local debugging and must
+# never be committed.
+custom_components/fan_bridge/www/*.map
 
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+
+# Home Assistant run by the devcontainer: everything it writes in its config
+# folder (auth tokens in .storage/, database, logs) stays local. Only the
+# configuration files are versioned.
+.devcontainer/config/*
+!.devcontainer/config/configuration.yaml
+!.devcontainer/config/ui-lovelace.yaml
