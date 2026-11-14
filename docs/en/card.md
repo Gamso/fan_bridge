@@ -19,7 +19,7 @@ fan_entity: fan.living_room
 
 `fan_entity` is the fan created by the integration (`fan.<name>`), and that is enough: the card finds its light, timer and beep by itself, see [Which entities it controls](#which-entities-it-controls). Reload the browser page after installing or updating the integration. A new card is not added to a dashboard by itself: add one per fan.
 
-The visual editor only asks for the fan and what belongs to the card (name, direction, light while off). The backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
+The visual editor only lists the fans of the FanBridge integration, and only asks for the fan and what belongs to the card (name, direction, light while off). The backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
 
 ## What it shows
 
