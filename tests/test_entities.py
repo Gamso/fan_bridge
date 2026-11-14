@@ -126,6 +126,24 @@ async def test_light_mirrors_the_light_in_charge(hass, patch_services):
     assert calls.await_args.args[:3] == ("light", "turn_on", {"entity_id": LIGHT_BACKUP, "color_temp_kelvin": 3000})
 
 
+async def test_light_offers_only_the_modes_it_relays(hass):
+    """Colours are not relayed: a colour light is offered as what it can do of the rest."""
+    _fans(hass)
+    hass.states.async_set(LIGHT_MAIN, "on", {"supported_color_modes": ["hs", "color_temp"], "color_mode": "hs", "brightness": 128})
+    hass.states.async_set(LIGHT_BACKUP, "on", {"supported_color_modes": ["rgb"], "color_mode": "rgb", "brightness": 64})
+    await setup_entry(hass, make_entry({"light_entity": LIGHT_MAIN, "fallback_light_entity": LIGHT_BACKUP}))
+    state = hass.states.get("light.klassfan_light")
+    assert state.attributes["supported_color_modes"] == ["color_temp"]
+    assert state.attributes["color_mode"] == "color_temp"
+    assert state.attributes["brightness"] == 128
+
+    hass.states.async_set(LIGHT_MAIN, "unavailable")
+    await hass.async_block_till_done()
+    state = hass.states.get("light.klassfan_light")
+    assert state.attributes["supported_color_modes"] == ["brightness"]
+    assert state.attributes["color_mode"] == "brightness"
+
+
 async def test_light_is_independent_of_the_fan(hass):
     """The light follows its own availability, not that of the fan."""
     _fans(hass, main_state="unavailable", backup_state="unavailable")
