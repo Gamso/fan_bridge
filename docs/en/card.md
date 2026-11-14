@@ -19,11 +19,11 @@ fan_entity: fan.living_room
 
 `fan_entity` is the fan created by the integration (`fan.<name>`), and that is enough: the card finds its light, timer and beep by itself, see [Which entities it controls](#which-entities-it-controls). Reload the browser page after installing or updating the integration. A new card is not added to a dashboard by itself: add one per fan.
 
-The visual editor only asks for the fan and what belongs to the card (name, direction, light while off). The backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
+The visual editor only lists the fans of the FanBridge integration, and only asks for the fan and what belongs to the card (name, direction, light while off). The backup fan, the entities and the speeds are set in the integration, see [Main and backup fans](fans.md).
 
 ## What it shows
 
-- **Speed dial**: 270° with one numbered step per speed. Tap the arc or a number to pick a speed. The number of speeds comes from the fan's `percentage_step` (6 when it is not reported); 6-speed fans get named speeds (Gentle, Soft, Moderate, Normal, Strong, Turbo), others "Speed N". A fan with more than 10 steps (continuous speed) gets 6.
+- **Speed dial**: 270° with one numbered step per speed. Tap the arc or a number to pick a speed, or drag along the arc: the dial follows and the speed is sent once, when you let go. The number of speeds comes from the fan's `percentage_step` (6 when it is not reported); 6-speed fans get named speeds (Gentle, Soft, Moderate, Normal, Strong, Turbo), others "Speed N". A fan with more than 10 steps (continuous speed) gets 6.
 - **Power button** in the opening of the dial, shown only if the fan can be turned on and off. An on/off fan without speeds gets no dial.
 - **Animated fan icon** that spins faster with speed, and still when the browser asks for reduced motion.
 - **Blade direction** (summer / winter) on its own row, independent of power, with a different background effect for each (air streaks / rising particles). It is shown for fans that support `direction`. See [Summer / winter](#summer--winter).
@@ -34,7 +34,7 @@ The visual editor only asks for the fan and what belongs to the card (name, dire
 
 - Controls that do not apply while the fan is off (light, beep, preset, timer, direction) are disabled. A fan in `unknown` state counts as off and unavailable.
 - **Stop timer presets**, always, also for fans whose timer is a free-form `number`.
-- **Light colour temperature**, tucked behind a button next to the light chip.
+- **Light brightness and colour temperature**, tucked behind a button next to the light chip; each slider is shown when the light supports it.
 
   ![The light colour temperature panel](../images/card/en/light.png)
 
@@ -77,7 +77,7 @@ Text, surfaces and borders come from the active Home Assistant theme. The accent
 
 The card controls the fan you give it, and finds the light, the stop timer and the beep of **the same FanBridge device** in the entity registry. It does not depend on their names, so renaming an entity does not break the card. A control whose entity does not exist (a fan without a light, or a role left empty in the integration) is hidden.
 
-The timer is a `select` or a `number` according to the underlying entity: the card calls `select.select_option` or `number.set_value` accordingly, and shows the options a `select` reports.
+The timer is the integration's `select.<name>_timer`: the card shows its options and calls `select.select_option`.
 
 If the entity is not a FanBridge fan, the card shows a message asking for one.
 

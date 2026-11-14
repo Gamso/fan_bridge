@@ -23,7 +23,7 @@ Le ventilateur en service, voir [Principal et secours](fans.md).
 
 ## `light.<nom>_light`
 
-La lumière en service : allumage, luminosité et température de couleur quand elle les gère. Mêmes attributs.
+La lumière en service : allumage, luminosité et température de couleur quand elle les gère. Les couleurs ne sont pas relayées : une lumière couleur est proposée comme lumière à température de couleur si elle en a une, comme lumière variable sinon. Mêmes attributs.
 
 ## `select.<nom>_timer`
 
@@ -36,6 +36,25 @@ L'interrupteur du bip en service. Mêmes attributs.
 ## Boutons de télécommande
 
 Les boutons de télécommande ne sont pas des entités : ils sont stockés dans les options et listés dans **Configurer → Télécommandes**, voir [Télécommandes](remotes.md). Chaque bouton appuyé appelle les services des entités fusionnées (`fan.toggle`, `fan.increase_speed`, `fan.set_percentage`, `fan.set_direction`, `fan.oscillate`, `fan.set_preset_mode`, `light.toggle`, `switch.toggle`, ...).
+
+## Événement du journal
+
+`fan_bridge_source_changed` est émis quand l'entité de secours d'un rôle prend le relais, ou le rend à l'entité principale. Il apparaît dans le journal (« switched to its backup … », « is back on its main entity … ») et peut déclencher des automatisations.
+
+| Donnée | Valeur |
+| --- | --- |
+| `entity_id` | L'entité fusionnée (`fan.<nom>`, `light.<nom>_light`, ...) |
+| `role` | `fan`, `light`, `timer` ou `sound` |
+| `source_entity` | L'entité désormais en service |
+| `using_backup` | `true` quand le secours a pris le relais |
+
+## Entités renommées
+
+Les options enregistrent des identifiants d'entités. Quand vous renommez une entité principale, de secours, de présence ou de télécommande, l'intégration écrit le nouvel identifiant dans ses options et se recharge : rien à régler de nouveau.
+
+## Diagnostics
+
+**Paramètres → Appareils et services → FanBridge → ⋮ → Télécharger les diagnostics** donne les réglages et, pour chaque rôle, les entités principale et de secours, celle en service et leurs états.
 
 ## Le fichier de la carte
 

@@ -19,11 +19,11 @@ fan_entity: fan.salon
 
 `fan_entity` est le ventilateur créé par l'intégration (`fan.<nom>`), et cela suffit : la carte trouve seule sa lumière, sa minuterie et son bip, voir [Les entités qu'elle commande](#les-entités-quelle-commande). Rechargez la page du navigateur après l'installation ou la mise à jour de l'intégration. Une nouvelle carte n'est pas ajoutée seule à un tableau de bord : ajoutez-en une par ventilateur.
 
-L'éditeur visuel ne demande que le ventilateur et ce qui relève de la carte (nom, sens, lumière éteinte). Le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
+L'éditeur visuel ne propose que les ventilateurs de l'intégration FanBridge, et ne demande que le ventilateur et ce qui relève de la carte (nom, sens, lumière éteinte). Le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
 
 ## Ce qu'elle affiche
 
-- **Cadran des vitesses** : 270° avec un pas numéroté par vitesse. Touchez l'arc ou un numéro pour choisir une vitesse. Le nombre de vitesses vient du `percentage_step` du ventilateur (6 s'il n'est pas annoncé) ; les ventilateurs à 6 vitesses ont des vitesses nommées (Très doux, Doux, Modéré, Moyen, Fort, Turbo), les autres « Vitesse N ». Un ventilateur de plus de 10 pas (vitesse continue) en a 6.
+- **Cadran des vitesses** : 270° avec un pas numéroté par vitesse. Touchez l'arc ou un numéro pour choisir une vitesse, ou glissez le long de l'arc : le cadran suit et la vitesse est envoyée une seule fois, au relâchement. Le nombre de vitesses vient du `percentage_step` du ventilateur (6 s'il n'est pas annoncé) ; les ventilateurs à 6 vitesses ont des vitesses nommées (Très doux, Doux, Modéré, Moyen, Fort, Turbo), les autres « Vitesse N ». Un ventilateur de plus de 10 pas (vitesse continue) en a 6.
 - **Bouton marche/arrêt** dans l'ouverture du cadran, affiché seulement si le ventilateur peut être allumé et éteint. Un ventilateur tout ou rien sans vitesses n'a pas de cadran.
 - **Icône de ventilateur animée** qui tourne plus vite avec la vitesse, et immobile quand le navigateur demande de réduire les animations.
 - **Sens des pales** (été / hiver) sur sa propre ligne, indépendant de la marche, avec un effet de fond différent pour chacun (filets d'air / particules qui montent). Il apparaît pour les ventilateurs qui gèrent `direction`. Voir [Été / hiver](#été--hiver).
@@ -34,7 +34,7 @@ L'éditeur visuel ne demande que le ventilateur et ce qui relève de la carte (n
 
 - Les commandes qui n'ont pas de sens ventilateur éteint (lumière, bip, préréglage, minuterie, sens) sont désactivées. Un ventilateur à l'état `unknown` compte comme éteint et indisponible.
 - **Préréglages de minuterie**, toujours, y compris pour les ventilateurs dont la minuterie est un `number` en saisie libre.
-- **Température de couleur de la lumière**, derrière un bouton à côté de la pastille lumière.
+- **Luminosité et température de couleur de la lumière**, derrière un bouton à côté de la pastille lumière ; chaque curseur apparaît si la lumière le gère.
 
   ![Le réglage de température de couleur de la lumière](../images/card/fr/light.png)
 
@@ -77,7 +77,7 @@ Le texte, les surfaces et les bordures viennent du thème actif de Home Assistan
 
 La carte commande le ventilateur indiqué, et retrouve la lumière, la minuterie d'arrêt et le bip **du même appareil FanBridge** dans le registre des entités. Elle ne dépend pas de leurs noms : renommer une entité ne casse donc pas la carte. Une commande dont l'entité n'existe pas (un ventilateur sans lumière, ou un rôle laissé vide dans l'intégration) est masquée.
 
-La minuterie est un `select` ou un `number` selon l'entité d'origine : la carte appelle `select.select_option` ou `number.set_value` en conséquence, et affiche les options que rapporte un `select`.
+La minuterie est le `select.<nom>_timer` de l'intégration : la carte affiche ses options et appelle `select.select_option`.
 
 Si l'entité n'est pas un ventilateur FanBridge, la carte affiche un message qui en demande un.
 
