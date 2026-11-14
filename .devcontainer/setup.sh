@@ -31,18 +31,18 @@ if [ ! -f "$CONFIG/ui-lovelace.yaml" ] || \
 fi
 
 # ── Card JS file ─────────────────────────────────────────────────────────────
-if [ -f "$WORKSPACE/dist/fan-bridge-card.js" ]; then
-  echo "✅ fan-bridge-card.js found in dist/ – mounted automatically via devcontainer."
+if [ -f "$WORKSPACE/custom_components/fan_bridge/www/fan-bridge-card.js" ]; then
+  echo "✅ fan-bridge-card.js found in custom_components/fan_bridge/www/ – mounted automatically via devcontainer."
 else
   echo ""
-  echo "⚠️  WARNING: dist/fan-bridge-card.js not found."
+  echo "⚠️  WARNING: custom_components/fan_bridge/www/fan-bridge-card.js not found."
   echo ""
   echo "   Build the card first on your HOST machine:"
   echo "   1. cd $WORKSPACE"
   echo "   2. npm install"
   echo "   3. npm run build"
   echo ""
-  echo "   The dist/ folder is mounted into /config/www/fan_bridge/,"
+  echo "   custom_components/fan_bridge/www/ is mounted into /config/www/fan_bridge/,"
   echo "   so the card will appear automatically after building."
 fi
 

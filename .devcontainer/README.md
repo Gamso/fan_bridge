@@ -18,7 +18,7 @@ This devcontainer lets you develop and test the FanBridge Card against a real Ho
    npm run build
    ```
 
-   Verify that `dist/fan-bridge-card.js` exists.
+   Verify that `custom_components/fan_bridge/www/fan-bridge-card.js` exists.
 
 2. **Open in container**:
    - Press `F1` → **"Dev Containers: Reopen in Container"**
@@ -42,9 +42,9 @@ This devcontainer lets you develop and test the FanBridge Card against a real Ho
 | Path (host) | Mounted to (container) | Purpose |
 |---|---|---|
 | `.devcontainer/config/` | `/config/` | HA configuration (entities, Lovelace) |
-| `dist/` | `/config/www/fan_bridge/` | Built card JS served by HA |
+| `custom_components/fan_bridge/www/` | `/config/www/fan_bridge/` | Built card JS served by HA |
 
-The `dist/` folder is bind-mounted, so rebuilding on the host is immediately reflected in HA after a browser hard-refresh (`Ctrl+Shift+R`).
+The bundle's folder is bind-mounted, so rebuilding on the host is immediately reflected in HA after a browser hard-refresh (`Ctrl+Shift+R`).
 
 ## Simulated Entities
 
