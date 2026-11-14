@@ -36,7 +36,8 @@ class FanBridgeCardEditor extends LitElement {
   // light, timer, beep and speeds belong to the integration.
   private get _schema() {
     const schema: Record<string, unknown>[] = [
-      { name: "fan_entity", required: true, selector: { entity: { domain: "fan" } } },
+      // Only the fans FanBridge created: the card works with nothing else.
+      { name: "fan_entity", required: true, selector: { entity: { filter: { domain: "fan", integration: "fan_bridge" } } } },
       { name: "name", selector: { text: {} } },
       { name: "show_name", selector: { boolean: {} } },
       { name: "light_independent", selector: { boolean: {} } },

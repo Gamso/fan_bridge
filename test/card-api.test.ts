@@ -26,6 +26,12 @@ describe("getStubConfig (audit A1)", () => {
     expect(Card.getStubConfig(hass, []).fan_entity).toBe("fan.attic");
   });
 
+  it("prefers a FanBridge fan", () => {
+    const hass = makeHass([entity("fan.attic", "off"), entity("fan.bridge", "off")]);
+    hass.entities!["fan.attic"].platform = "tuya";
+    expect(Card.getStubConfig(hass, ["fan.attic", "fan.bridge"]).fan_entity).toBe("fan.bridge");
+  });
+
   it("keeps a placeholder when there is no fan", () => {
     expect(Card.getStubConfig(undefined, []).fan_entity).toBe("fan.ceiling_fan_with_light");
   });

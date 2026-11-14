@@ -30,15 +30,16 @@ class FanBridgeCard extends LitElement {
 
   // ── Static HA card registration ─────────────────────────────────────────────
 
-  // Called by the card picker with the instance's entities: preview the first
-  // real fan rather than a hard-coded id that only exists in the devcontainer.
+  // Called by the card picker with the instance's entities: preview a
+  // FanBridge fan when there is one, since the card only works with those.
   public static getStubConfig(
     hass?: HomeAssistant,
     entities: string[] = [],
   ): FanBridgeCardConfig {
+    const fans = [...entities, ...Object.keys(hass?.states ?? {})].filter((id) => id.startsWith("fan."));
     const fan =
-      entities.find((id) => id.startsWith("fan.")) ??
-      Object.keys(hass?.states ?? {}).find((id) => id.startsWith("fan.")) ??
+      fans.find((id) => hass?.entities?.[id]?.platform === "fan_bridge") ??
+      fans[0] ??
       "fan.ceiling_fan_with_light";
     return { fan_entity: fan, show_name: true };
   }

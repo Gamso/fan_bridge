@@ -46,6 +46,12 @@ describe("editor", () => {
     ]);
   });
 
+  it("only lists the fans of the FanBridge integration", async () => {
+    const { form } = await mountEditor({ fan_entity: "fan.f" }, IDS);
+    const field = form.schema[0] as unknown as { selector: { entity: { filter: unknown } } };
+    expect(field.selector.entity.filter).toEqual({ domain: "fan", integration: "fan_bridge" });
+  });
+
   it("leaves out the direction when the fan has none", async () => {
     const el = document.createElement("fan-bridge-card-editor") as EditorElement;
     el.hass = makeHass([entity("fan.f", "on", { supported_features: 0 })]);

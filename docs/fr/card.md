@@ -19,7 +19,7 @@ fan_entity: fan.salon
 
 `fan_entity` est le ventilateur créé par l'intégration (`fan.<nom>`), et cela suffit : la carte trouve seule sa lumière, sa minuterie et son bip, voir [Les entités qu'elle commande](#les-entités-quelle-commande). Rechargez la page du navigateur après l'installation ou la mise à jour de l'intégration. Une nouvelle carte n'est pas ajoutée seule à un tableau de bord : ajoutez-en une par ventilateur.
 
-L'éditeur visuel ne demande que le ventilateur et ce qui relève de la carte (nom, sens, lumière éteinte). Le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
+L'éditeur visuel ne propose que les ventilateurs de l'intégration FanBridge, et ne demande que le ventilateur et ce qui relève de la carte (nom, sens, lumière éteinte). Le secours, les entités et les vitesses se règlent dans l'intégration, voir [Principal et secours](fans.md).
 
 ## Ce qu'elle affiche
 
