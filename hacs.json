@@ -1,5 +1,8 @@
 {
   "name": "FanBridge",
   "render_readme": true,
-  "homeassistant": "2026.2.0"
+  "homeassistant": "2026.2.0",
+  "zip_release": true,
+  "filename": "fan_bridge.zip",
+  "hide_default_branch": true
 }

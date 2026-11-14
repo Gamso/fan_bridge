@@ -34,22 +34,30 @@ jobs:
       - name: Test
         run: npm test
 
+      # The bundle is not committed (the release builds it): just make sure
+      # the sources build.
       - name: Build
-        run: npm run build
-
-      # The integration serves the committed bundle: fail if it is not the
-      # output of the committed sources.
-      - name: Check that the bundle is up to date
         run: |
-          git status --porcelain custom_components/fan_bridge/www/
-          git diff --exit-code -- custom_components/fan_bridge/www/
-          test -z "$(git status --porcelain custom_components/fan_bridge/www/)"
+          npm run build
+          test -s custom_components/fan_bridge/www/fan-bridge-card.js
 
   integration:
     name: Integration tests and lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # The integration serves the card bundle, which is not committed: build
+      # it for the tests that load it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build the card
+        run: |
+          npm ci
+          npm run build
 
       - uses: actions/setup-python@v5
         with:

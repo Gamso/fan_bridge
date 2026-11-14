@@ -6,7 +6,7 @@
 
 ```
 custom_components/fan_bridge/   L'intégration
-  www/fan-bridge-card.js        Le fichier de la carte, construit depuis src/ (versionné)
+  www/fan-bridge-card.js        Le fichier de la carte, construit depuis src/ (non versionné)
 src/                            Les sources de la carte (TypeScript, Lit)
 test/                           Les tests de la carte (Vitest)
 tests/                          Les tests de l'intégration (pytest)
@@ -17,6 +17,8 @@ docs/                           Cette documentation (en/, fr/, images/)
 ## Intégration
 
 Python 3.14, Home Assistant 2026.2 ou plus récent.
+
+Construisez d'abord la carte (`npm ci && npm run build`) : un test vérifie le fichier que sert l'intégration.
 
 ```bash
 pip install -r requirements_test.txt
@@ -36,7 +38,7 @@ npm test            # Vitest (jsdom)
 npm run build       # écrit custom_components/fan_bridge/www/fan-bridge-card.js
 ```
 
-Versionnez le fichier reconstruit avec les sources : la CI échoue s’il diffère d’une construction neuve. `npm run watch` écrit aussi une sourcemap pour le débogage local ; elle est ignorée par git et jamais publiée.
+Le fichier de la carte **n'est pas versionné** : chaque pull request qui touche la carte entrerait en conflit dessus. Le workflow de release le construit et le livre dans le zip de la release. `npm run watch` écrit aussi une sourcemap pour le débogage local ; elle est ignorée par git et jamais publiée.
 
 La version est dans `package.json`, `src/version.ts` et `custom_components/fan_bridge/manifest.json` ; un test échoue si elles divergent.
 
@@ -46,9 +48,16 @@ Construisez d'abord la carte sur votre machine (`npm install && npm run build`),
 
 ## Intégration continue
 
-- **Build** : typecheck, lint, tests, construction, fichiers à jour
-- **Intégration** : pytest, ruff
+- **Build** : typecheck, lint, tests, construction
+- **Intégration** : construction de la carte, pytest, ruff
 - **Validate** : hassfest et HACS. Les textes de traduction ne doivent rien contenir qui ressemble à du HTML (`<nom>`), hassfest le refuse.
+
+## Publier une version
+
+1. Mettez la version dans `package.json`, `src/version.ts` et `custom_components/fan_bridge/manifest.json`, et ajoutez une section `## <version>` à `CHANGELOG.md`.
+2. Poussez un tag au nom de la version (`1.1.0` ou `v1.1.0`).
+
+Le workflow **Release** vérifie les versions, construit la carte, zippe `custom_components/fan_bridge/` (fichier de la carte compris) dans `fan_bridge.zip` et publie la release GitHub avec la section du CHANGELOG comme notes. HACS installe ce zip (`zip_release` dans `hacs.json`) et ne propose pas la branche par défaut, qui n'a pas le fichier de la carte.
 
 ## Documentation
 

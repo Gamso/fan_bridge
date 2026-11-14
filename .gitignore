@@ -1,10 +1,11 @@
 node_modules/
-# The bundle is built into custom_components/fan_bridge/www/; dist/ is a
-# leftover of older builds.
-dist/
-# Sourcemaps are only emitted by `npm run watch` for local debugging and must
-# never be committed.
+# The card bundle is built from src/ into custom_components/fan_bridge/www/
+# (npm run build) and shipped in the release zip, never committed: every PR
+# touching the card would otherwise conflict on it. dist/ is a leftover of
+# older builds.
+custom_components/fan_bridge/www/fan-bridge-card.js
 custom_components/fan_bridge/www/*.map
+dist/
 
 __pycache__/
 .pytest_cache/

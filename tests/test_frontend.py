@@ -30,6 +30,22 @@ async def test_card_is_served_and_loaded_once():
     add_url.assert_called_once_with(hass, f"/{DOMAIN}/fan-bridge-card.js?v=9.9.9-{digest}")
 
 
+async def test_a_missing_bundle_is_reported(caplog, tmp_path):
+    hass = MagicMock()
+    hass.data = {}
+    hass.http.async_register_static_paths = AsyncMock()
+    hass.async_add_executor_job = AsyncMock(side_effect=lambda func, *args: func(*args))
+
+    with (
+        patch.object(frontend, "async_get_integration", AsyncMock(return_value=MagicMock(version="9.9.9"))),
+        patch.object(frontend, "add_extra_js_url"),
+        patch.object(frontend, "CARD_FILE", "missing.js"),
+    ):
+        await frontend.async_register_card(hass)
+
+    assert "The FanBridge card is missing" in caplog.text
+
+
 def test_digest_changes_with_the_bundle(tmp_path):
     bundle = tmp_path / "card.js"
     bundle.write_text("a")
@@ -39,7 +55,8 @@ def test_digest_changes_with_the_bundle(tmp_path):
     assert frontend._digest(tmp_path / "missing.js") == ""
 
 
-def test_bundle_is_shipped_with_the_integration():
+def test_bundle_is_built_into_the_integration():
+    """`npm run build` writes the bundle where the integration serves it (CI builds it first)."""
     bundle = Path(frontend.__file__).parent / "www" / frontend.CARD_FILE
     assert bundle.stat().st_size > 0
 
