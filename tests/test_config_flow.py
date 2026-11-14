@@ -1,7 +1,8 @@
 """The creation flow and the options flow."""
 from __future__ import annotations
 
-from homeassistant.data_entry_flow import FlowResultType
+import pytest
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 
 from custom_components.fan_bridge.const import DOMAIN
 
@@ -144,3 +145,14 @@ async def test_remove_remote_buttons(hass):
     await _menu(hass, flow_id, "menu")
     result = await _menu(hass, flow_id, "save")
     assert result["data"]["remotes"] == [remotes[1]]
+
+
+async def test_a_fanbridge_entity_cannot_be_a_source(hass):
+    """Picking a merged entity as a source would make the calls loop."""
+    hass.states.async_set(MAIN, "on")
+    await setup_entry(hass, make_entry())
+    assert hass.states.get("fan.klassfan") is not None
+
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+    with pytest.raises(InvalidData):
+        await hass.config_entries.flow.async_configure(result["flow_id"], {"name": "Loop", "fan_entity": "fan.klassfan"})
