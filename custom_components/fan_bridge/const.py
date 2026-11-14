@@ -3,6 +3,10 @@ from __future__ import annotations
 
 DOMAIN = "fan_bridge"
 
+# Fired when the backup entity of a role takes over, or hands back to the main
+# one: {entity_id, role, source_entity, using_backup}. Shown in the logbook.
+EVENT_SOURCE_CHANGED = f"{DOMAIN}_source_changed"
+
 # Config entry keys. The creation flow stores the name and the main fan; the
 # options flow stores the rest. Both are read merged (options win).
 CONF_NAME = "name"
