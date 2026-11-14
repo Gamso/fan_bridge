@@ -77,7 +77,7 @@ Text, surfaces and borders come from the active Home Assistant theme. The accent
 
 The card controls the fan you give it, and finds the light, the stop timer and the beep of **the same FanBridge device** in the entity registry. It does not depend on their names, so renaming an entity does not break the card. A control whose entity does not exist (a fan without a light, or a role left empty in the integration) is hidden.
 
-The timer is a `select` or a `number` according to the underlying entity: the card calls `select.select_option` or `number.set_value` accordingly, and shows the options a `select` reports.
+The timer is the integration's `select.<name>_timer`: the card shows its options and calls `select.select_option`.
 
 If the entity is not a FanBridge fan, the card shows a message asking for one.
 

@@ -29,8 +29,6 @@ export interface ResolvedEntities {
   sound?: string;
 }
 
-export const TIMER_OPTIONS_MIN = [0, 15, 30, 60, 120, 240, 480] as const;
-
 // Speed count used when the fan does not report a usable percentage_step
 // (and the count the named speed labels were written for).
 export const DEFAULT_SPEED_COUNT = 6;

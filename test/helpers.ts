@@ -17,7 +17,6 @@ export function entity(
 const ROLE_OF_DOMAIN: Record<string, string | undefined> = {
   light: "light",
   select: "timer",
-  number: "timer",
   switch: "sound",
 };
 

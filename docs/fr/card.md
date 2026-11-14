@@ -77,7 +77,7 @@ Le texte, les surfaces et les bordures viennent du thème actif de Home Assistan
 
 La carte commande le ventilateur indiqué, et retrouve la lumière, la minuterie d'arrêt et le bip **du même appareil FanBridge** dans le registre des entités. Elle ne dépend pas de leurs noms : renommer une entité ne casse donc pas la carte. Une commande dont l'entité n'existe pas (un ventilateur sans lumière, ou un rôle laissé vide dans l'intégration) est masquée.
 
-La minuterie est un `select` ou un `number` selon l'entité d'origine : la carte appelle `select.select_option` ou `number.set_value` en conséquence, et affiche les options que rapporte un `select`.
+La minuterie est le `select.<nom>_timer` de l'intégration : la carte affiche ses options et appelle `select.select_option`.
 
 Si l'entité n'est pas un ventilateur FanBridge, la carte affiche un message qui en demande un.
 
