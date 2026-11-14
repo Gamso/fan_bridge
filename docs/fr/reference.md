@@ -23,7 +23,7 @@ Le ventilateur en service, voir [Principal et secours](fans.md).
 
 ## `light.<nom>_light`
 
-La lumière en service : allumage, luminosité et température de couleur quand elle les gère. Mêmes attributs.
+La lumière en service : allumage, luminosité et température de couleur quand elle les gère. Les couleurs ne sont pas relayées : une lumière couleur est proposée comme lumière à température de couleur si elle en a une, comme lumière variable sinon. Mêmes attributs.
 
 ## `select.<nom>_timer`
 

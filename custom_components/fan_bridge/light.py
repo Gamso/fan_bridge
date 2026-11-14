@@ -25,13 +25,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 def _modes(raw: Any) -> set[ColorMode]:
+    """The one colour mode this light offers for the modes of its source.
+
+    Only the brightness and the colour temperature are relayed, so a source
+    with colours (hs, rgb...) is offered as what it can do of those two:
+    colour temperature if it has it, brightness otherwise.
+    """
     modes: set[ColorMode] = set()
     for mode in raw or ():
         try:
             modes.add(ColorMode(mode))
         except ValueError:
             continue
-    return modes or {ColorMode.ONOFF}
+    if ColorMode.COLOR_TEMP in modes:
+        return {ColorMode.COLOR_TEMP}
+    if modes - {ColorMode.ONOFF, ColorMode.UNKNOWN}:
+        return {ColorMode.BRIGHTNESS}
+    return {ColorMode.ONOFF}
 
 
 class FanBridgeLight(FanBridgeEntity, LightEntity):
@@ -57,13 +67,8 @@ class FanBridgeLight(FanBridgeEntity, LightEntity):
 
     @property
     def color_mode(self) -> ColorMode:
-        raw = self._attrs.get("color_mode")
-        modes = self.supported_color_modes
-        try:
-            mode = ColorMode(raw) if raw else None
-        except ValueError:
-            mode = None
-        return mode if mode in modes else sorted(modes)[0]
+        (mode,) = self.supported_color_modes
+        return mode
 
     @property
     def brightness(self) -> int | None:
