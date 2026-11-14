@@ -10,6 +10,7 @@ from .const import CONF_RELOAD_MAIN
 from .group import FanGroup, merged_config
 from .recovery import MainRecovery
 from .remotes import RemoteManager
+from .renames import async_track_renames
 
 PLATFORMS: list[Platform] = [Platform.FAN, Platform.LIGHT, Platform.SELECT, Platform.SWITCH]
 
@@ -28,6 +29,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: FanBridgeConfigEntry) ->
 
     if merged_config(entry).get(CONF_RELOAD_MAIN):
         entry.async_on_unload(MainRecovery(hass, entry.runtime_data).async_start())
+
+    # A renamed source entity is written back into the entry.
+    entry.async_on_unload(async_track_renames(hass, entry))
 
     # The options flow rewrites the entry: rebuild everything from it.
     entry.async_on_unload(entry.add_update_listener(_async_reload))

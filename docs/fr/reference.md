@@ -33,6 +33,10 @@ La minuterie d'arrêt du ventilateur en service. Pour une entité `number`, les 
 
 L'interrupteur du bip en service. Mêmes attributs.
 
+## Entités renommées
+
+Les options enregistrent des identifiants d'entités. Quand vous renommez une entité principale, de secours, de présence ou de télécommande, l'intégration écrit le nouvel identifiant dans ses options et se recharge : rien à régler de nouveau.
+
 ## Boutons de télécommande
 
 Les boutons de télécommande ne sont pas des entités : ils sont stockés dans les options et listés dans **Configurer → Télécommandes**, voir [Télécommandes](remotes.md). Chaque bouton appuyé appelle les services des entités fusionnées (`fan.toggle`, `fan.increase_speed`, `fan.set_percentage`, `fan.set_direction`, `fan.oscillate`, `fan.set_preset_mode`, `light.toggle`, `switch.toggle`, ...).
